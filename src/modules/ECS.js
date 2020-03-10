@@ -6,6 +6,7 @@ import InputUpdateSystem from "./systems/InputUpdateSystem.js"
 export default class ECS {
     nextEntityId = 0
     inputActions = {}
+    removedComponents = new Map()
     singletons = {
         input: new InputState(),
         bindings: new KeyBindings(),
@@ -93,8 +94,46 @@ export default class ECS {
         this.components[compName][entityId] = component
     }
 
+    removeEntity(entityId) {
+        if (!Number.isInteger(entityId))
+        throw new TypeError("Entity IDs must be integers")
+
+        Object.values(this.components).forEach(comp => {
+            delete comp[entityId]
+        })
+    }
+
+    removeComponent(entityId, component) {
+        if (!Number.isInteger(entityId))
+            throw new TypeError("Entity IDs must be integers")
+
+        let compName = component
+        if (typeof(component) === "function") compName = component.name
+
+        // Add the id to a list of ids to remove from that component array
+        if (this.removedComponents.has(compName)) {
+            this.removedComponents.get(compName).push(entityId)
+        } else {
+            this.removedComponents.set(compName, [entityId])
+        }
+    }
+
+    // Clear out all components related to entity
+    clearRemovedComponents() {
+        if (!this.removedComponents.size) return
+
+        this.removedComponents.forEach((entityList, compName) => {
+            entityList.forEach(id => {
+                delete this.components[compName][id]
+            })
+        })
+
+        this.removedComponents.clear()
+    }
+
     // Passing in all components, singleton components, and input action list
     execSystems() {
+        this.clearRemovedComponents()
         this.systems.forEach(s => {
             s(this.components, this.singletons, this.inputActions)
         })

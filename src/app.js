@@ -19,17 +19,23 @@ ecs.registerSystem(RenderSystem)
 
 const canvas = ecs.singletons.canvas
 // Generate random rectangles of various sizes
-for (let i = 0; i < Math.random() * 15; i++) {
-    ecs.createEntity([
+for (let i = 0; i < 10; i++) {
+    const id = ecs.createEntity([
         new Position(Math.random() * canvas.width, Math.random() * canvas.height),
         new RectCollider(Math.random() * 100)
     ])
+    setTimeout(function () {
+        ecs.removeEntity(id)
+    }, Math.random() * 5000);
 }
 
 const player = ecs.createEntity([
     new Position(100, 100),
     new RectCollider(30)
 ])
+setTimeout(function () {
+    ecs.removeComponent(player, RectCollider)
+}, 1000);
 
 function tick() {
     canvas.clear()
