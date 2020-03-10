@@ -4,6 +4,7 @@ import InputState from "./components/InputState.js"
 import InputUpdateSystem from "./systems/InputUpdateSystem.js"
 
 export default class ECS {
+    entityCount = 0
     inputActions = {}
     singletons = {
         input: new InputState(),
@@ -28,6 +29,10 @@ export default class ECS {
         this.registerSystem(InputUpdateSystem)
     }
 
+    newEntity() {
+        return this.entityCount++
+    }
+
     // Expect format for bindings is {ACTION_NAME: KEY}
     addKeyBindings(bindings) {
         if (typeof(bindings) !== "object") return
@@ -47,10 +52,32 @@ export default class ECS {
         }
     }
 
+    addComponent(entityId, component) {
+        if (!Number.isInteger(entityId))
+            throw new TypeError("Entity IDs must be integers")
+        if (typeof(component) !== "object")
+            throw new TypeError("Components must be objects")
+
+        const compName = component.constructor.name
+        if (!this.components[compName]) this.registerComponent(compName)
+
+        this.components[compName][entityId] = component
+    }
+
+    registerComponent(component) {
+        if (typeof(component) === "function") {
+            this.components[component.name] = []
+        } else if (typeof(component) === "string") {
+            this.components[component] = []
+        } else {
+            throw new TypeError("Registered components must be classes")
+        }
+    }
+
     // Systems execute in the order they are registered
     registerSystem(system) {
         if (typeof(system) !== "function") {
-            throw new Error(`Systems must be functions. Attempted to register: ${system}`)
+            throw new TypeError(`Systems must be functions. Attempted to register: ${system}`)
         }
         this.systems.push(system)
     }

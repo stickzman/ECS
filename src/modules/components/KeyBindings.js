@@ -1,4 +1,4 @@
-export default class {
+export default class KeyBindings {
     keyToAction = {}
     actionToKey = {}
 
@@ -11,7 +11,7 @@ export default class {
 
     addBinding(action, key) {
         if (typeof(action) !== "string" || typeof(key) !== "string") {
-            throw new Error(`Key bindings must be strings`)
+            throw new TypeError(`Key bindings must be strings`)
         }
         this.keyToAction[key] = action
         this.actionToKey[action] = key
