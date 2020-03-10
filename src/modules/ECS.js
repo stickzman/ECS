@@ -4,7 +4,7 @@ import InputState from "./components/InputState.js"
 import InputUpdateSystem from "./systems/InputUpdateSystem.js"
 
 export default class ECS {
-    entityCount = 0
+    nextEntityId = 0
     inputActions = {}
     singletons = {
         input: new InputState(),
@@ -29,10 +29,6 @@ export default class ECS {
         this.registerSystem(InputUpdateSystem)
     }
 
-    newEntity() {
-        return this.entityCount++
-    }
-
     // Expect format for bindings is {ACTION_NAME: KEY}
     addKeyBindings(bindings) {
         if (typeof(bindings) !== "object") return
@@ -52,16 +48,17 @@ export default class ECS {
         }
     }
 
-    addComponent(entityId, component) {
-        if (!Number.isInteger(entityId))
-            throw new TypeError("Entity IDs must be integers")
-        if (typeof(component) !== "object")
-            throw new TypeError("Components must be objects")
+    createEntity(components) {
+        const id = this.nextEntityId++
+        // If any components are passed in, add them to entity b4 returning id
+        if (components) components.forEach(c => this.addComponent(id, c))
+        return id
+    }
 
-        const compName = component.constructor.name
-        if (!this.components[compName]) this.registerComponent(compName)
-
-        this.components[compName][entityId] = component
+    registerSingleton(Component) {
+        if (typeof(Component) !== "function")
+            throw new TypeError("Registered components must be classes")
+        this.singletons[Component.name] = new Component()
     }
 
     registerComponent(component) {
@@ -80,6 +77,19 @@ export default class ECS {
             throw new TypeError(`Systems must be functions. Attempted to register: ${system}`)
         }
         this.systems.push(system)
+    }
+
+    addComponent(entityId, component) {
+        if (!Number.isInteger(entityId))
+            throw new TypeError("Entity IDs must be integers")
+        if (typeof(component) !== "object")
+            throw new TypeError("Components must be objects")
+
+        const compName = component.constructor.name
+        if (!this.components[compName]) this.registerComponent(compName)
+        if (entityId >= this.nextEntityId) this.nextEntityId = entityId + 1
+
+        this.components[compName][entityId] = component
     }
 
     // Passing in all components, singleton components, and input action list
