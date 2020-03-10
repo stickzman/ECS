@@ -1,6 +1,9 @@
 import ECS from "./modules/ECS.js"
+import Canvas2D from "./modules/components/Canvas2D.js"
+import Position from "./modules/components/Position.js"
+import RectCollider from "./modules/components/RectCollider.js"
+import RenderSystem from "./modules/systems/ColliderRenderer.js"
 
-const $div = document.querySelector("body > div")
 const ecs = new ECS()
 window.ecs = ecs // Allows ECS module to be accessed in Chrome's dev console
 
@@ -11,18 +14,26 @@ ecs.addKeyBindings({
     RIGHT: "d",
     JUMP: " "
 })
-ecs.registerSystem((c, s, a) => {
-    const input = s.input
-    if (input.pressedThisFrame(a.JUMP)) {
-        $div.style.background = "red"
-    }
-    if (input.releasedThisFrame(a.JUMP)) {
-        $div.style.background = "blue"
-    }
-})
+ecs.registerSingleton(new Canvas2D("#canvas"), "canvas")
+ecs.registerSystem(RenderSystem)
+
+const canvas = ecs.singletons.canvas
+// Generate random rectangles of various sizes
+for (let i = 0; i < Math.random() * 15; i++) {
+    ecs.createEntity([
+        new Position(Math.random() * canvas.width, Math.random() * canvas.height),
+        new RectCollider(Math.random() * 100)
+    ])
+}
+
+const player = ecs.createEntity([
+    new Position(100, 100),
+    new RectCollider(30)
+])
 
 function tick() {
-    ecs.runSystems()
+    canvas.clear()
+    ecs.execSystems()
     window.requestAnimationFrame(tick)
 }
 

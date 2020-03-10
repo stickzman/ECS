@@ -55,10 +55,11 @@ export default class ECS {
         return id
     }
 
-    registerSingleton(Component) {
-        if (typeof(Component) !== "function")
-            throw new TypeError("Registered components must be classes")
-        this.singletons[Component.name] = new Component()
+    registerSingleton(component, name) {
+        if (typeof(component) !== "object")
+            throw new TypeError("Registered components must be objects")
+        name = name || component.constructor.name
+        this.singletons[name] = component
     }
 
     registerComponent(component) {
@@ -93,7 +94,7 @@ export default class ECS {
     }
 
     // Passing in all components, singleton components, and input action list
-    runSystems() {
+    execSystems() {
         this.systems.forEach(s => {
             s(this.components, this.singletons, this.inputActions)
         })

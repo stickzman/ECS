@@ -1,4 +1,4 @@
-export default function (components, singletons) {
+export default function InputUpdateSystem (components, singletons) {
     const inputStream = singletons.inputStream
     const state = singletons.input.state
 
