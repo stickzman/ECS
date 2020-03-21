@@ -1,12 +1,17 @@
+import { ENTITY_ID_NON_INT, COMP_NON_CLASS } from "./Errors.js"
+import Entity from "./Entity.js"
+import Query from "./Query.js"
 import KeyBindings from "./components/KeyBindings.js"
 import InputStream from "./components/InputStream.js"
 import InputState from "./components/InputState.js"
 import InputUpdateSystem from "./systems/InputUpdateSystem.js"
 
 export default class ECS {
-    nextEntityId = 0
+    _nextEntityId = 0
     inputActions = {}
-    removedComponents = new Map()
+
+    _queries = new Map()
+    _entities = []
     singletons = {
         input: new InputState(),
         bindings: new KeyBindings(),
@@ -32,11 +37,11 @@ export default class ECS {
 
     // Expect format for bindings is {ACTION_NAME: KEY}
     addKeyBindings(bindings) {
-        if (typeof(bindings) !== "object") return
+        if (typeof bindings !== "object") return
 
         for (const action in bindings) {
             let key = bindings[action]
-            if (typeof(key) !== "string") {
+            if (typeof key !== "string") {
                 console.error(`Key bindings must be strings. Cannot bind:`, {
                     action: action,
                     key: key
@@ -50,92 +55,101 @@ export default class ECS {
     }
 
     createEntity(components) {
-        const id = this.nextEntityId++
-        // If any components are passed in, add them to entity b4 returning id
-        if (components) components.forEach(c => this.addComponent(id, c))
+        const id = this._nextEntityId++
+        this._entities[id] = new Entity(id)
         return id
     }
 
     registerSingleton(component, name) {
-        if (typeof(component) !== "object")
-            throw new TypeError("Registered components must be objects")
+        if (typeof component !== "object")
+            throw new TypeError("Singleton components must be object")
         name = name || component.constructor.name
         this.singletons[name] = component
     }
 
-    registerComponent(component) {
-        if (typeof(component) === "function") {
-            this.components[component.name] = []
-        } else if (typeof(component) === "string") {
-            this.components[component] = []
-        } else {
-            throw new TypeError("Registered components must be classes")
-        }
-    }
-
     // Systems execute in the order they are registered
     registerSystem(system) {
-        if (typeof(system) !== "function") {
+        if (typeof system !== "function") {
             throw new TypeError(`Systems must be functions. Attempted to register: ${system}`)
         }
+
+        let Components = system.prototype.requiredComponents
+
+        // Create a new query, add to _queries list if not empty
+        if (Components) {
+            Components = (Array.isArray(Components)) ? Components : [Components]
+            system.prototype.results = this._getQuery(Components)
+        } else {
+            system.prototype.results = new Query(Components, this._entities)
+        }
+
         this.systems.push(system)
     }
 
-    addComponent(entityId, component) {
-        if (!Number.isInteger(entityId))
-            throw new TypeError("Entity IDs must be integers")
-        if (typeof(component) !== "object")
-            throw new TypeError("Components must be objects")
+    _getQuery(Components) {
+        const key = Components.sort().join(",")
+        if (this._queries.has(key)) return this._queries(key)
 
-        const compName = component.constructor.name
-        if (!this.components[compName]) this.registerComponent(compName)
-        if (entityId >= this.nextEntityId) this.nextEntityId = entityId + 1
-
-        this.components[compName][entityId] = component
+        const query = new Query(Components, this._entities)
+        this._queries.set(key, query)
+        return query
     }
 
-    removeEntity(entityId) {
-        if (!Number.isInteger(entityId))
-        throw new TypeError("Entity IDs must be integers")
+    addComponent(id, Component, ...args) {
+        if (!Number.isInteger(id))
+            throw new Error(ENTITY_ID_NON_INT)
+        if (typeof Component !== "function")
+            throw new Error(COMP_NON_CLASS)
+        if (this._entities[id] === undefined)
+            throw new Error("Entity does not exist")
 
-        Object.values(this.components).forEach(comp => {
-            delete comp[entityId]
-        })
-    }
+        // Create component and add to entity
+        const e = this._entities[id]
+        const comp = new Component(...args)
+        Object.seal(comp)
+        e.addComponent(comp)
 
-    removeComponent(entityId, component) {
-        if (!Number.isInteger(entityId))
-            throw new TypeError("Entity IDs must be integers")
-
-        let compName = component
-        if (typeof(component) === "function") compName = component.name
-
-        // Add the id to a list of ids to remove from that component array
-        if (this.removedComponents.has(compName)) {
-            this.removedComponents.get(compName).push(entityId)
-        } else {
-            this.removedComponents.set(compName, [entityId])
+        // Update entity component queries
+        for (const [key, query] of this._queries) {
+            if (query.hasEntity(e)) continue
+            if (e.hasAllComponents(query.componentTypes)) query.addEntity(e)
         }
     }
 
-    // Clear out all components related to entity
-    clearRemovedComponents() {
-        if (!this.removedComponents.size) return
+    removeComponent(id, Component) {
+        if (!Number.isInteger(id))
+            throw new Error(ENTITY_ID_NON_INT)
+        if (typeof Component !== "function")
+            throw new Error(COMP_NON_CLASS)
+        if (this._entities[id] === undefined)
+            throw new Error("Entity does not exist")
 
-        this.removedComponents.forEach((entityList, compName) => {
-            entityList.forEach(id => {
-                delete this.components[compName][id]
-            })
-        })
+        const e = this._entities[id]
+        e.removeComponent(Component)
 
-        this.removedComponents.clear()
+        // Update entity component queries
+        for (const [key, query] of this._queries) {
+            if (query.hasEntity(e) && !e.hasAllComponents(query.componentTypes))
+                query.removeEntity(e)
+        }
+    }
+
+    removeEntity(id) {
+        if (!Number.isInteger(id))
+            throw new Error(ENTITY_ID_NON_INT)
+        if (this._entities[id] === undefined) return
+
+        const e = this._entities[id]
+        for (const [key, query] of this._queries) {
+            query.removeEntity(e)
+        }
+        delete this._entities[id]
     }
 
     // Passing in all components, singleton components, and input action list
     execSystems() {
-        this.clearRemovedComponents()
         this.systems.forEach(s => {
-            s(this.components, this.singletons, this.inputActions)
+            s(s.prototype.results.components, this.singletons, this.inputActions)
         })
     }
 }
