@@ -1,4 +1,3 @@
-import { ENTITY_ID_NON_INT, COMP_NON_CLASS } from "./Errors.js"
 import Entity from "./Entity.js"
 import Query from "./Query.js"
 import KeyBindings from "./components/KeyBindings.js"
@@ -6,31 +5,31 @@ import InputStream from "./components/InputStream.js"
 import InputState from "./components/InputState.js"
 import InputUpdateSystem from "./systems/InputUpdateSystem.js"
 
+const ENTITY_ID_NON_INT = "Entity ID must be an integer"
+const COMP_NON_CLASS = "Component must be a class"
+
 export default class ECS {
     _nextEntityId = 0
     inputActions = {}
 
     _queries = new Map()
     _entities = []
-    singletons = {
+    _singletons = {
         input: new InputState(),
         bindings: new KeyBindings(),
         inputStream: new InputStream()
     }
-    components = {}
-    systems = []
+    _systems = []
 
     constructor() {
         // Set up KeyboardEvent listeners for input
         window.addEventListener("keydown", e => {
-            let action = this.singletons.bindings.getAction(e.key.toLowerCase())
-            if (!action) return
-            this.singletons.inputStream.addInput(action, true)
+            let action = this._singletons.bindings.getAction(e.key.toLowerCase())
+            if (action) this._singletons.inputStream.addInput(action, true)
         })
         window.addEventListener("keyup", e => {
-            let action = this.singletons.bindings.getAction(e.key.toLowerCase())
-            if (!action) return
-            this.singletons.inputStream.addInput(action, false)
+            let action = this._singletons.bindings.getAction(e.key.toLowerCase())
+            if (action) this._singletons.inputStream.addInput(action, false)
         })
         this.registerSystem(InputUpdateSystem)
     }
@@ -49,8 +48,8 @@ export default class ECS {
                 continue
             }
             this.inputActions[action] = action
-            this.singletons.input.addAction(action)
-            this.singletons.bindings.addBinding(action, key)
+            this._singletons.input.addAction(action)
+            this._singletons.bindings.addBinding(action, key)
         }
     }
 
@@ -64,7 +63,8 @@ export default class ECS {
         if (typeof component !== "object")
             throw new TypeError("Singleton components must be object")
         name = name || component.constructor.name
-        this.singletons[name] = component
+        this._singletons[name] = component
+        return component
     }
 
     // Systems execute in the order they are registered
@@ -83,7 +83,7 @@ export default class ECS {
             system.prototype.results = new Query(Components, this._entities)
         }
 
-        this.systems.push(system)
+        this._systems.push(system)
     }
 
     _getQuery(Components) {
@@ -114,6 +114,7 @@ export default class ECS {
             if (query.hasEntity(e)) continue
             if (e.hasAllComponents(query.componentTypes)) query.addEntity(e)
         }
+        return comp
     }
 
     removeComponent(id, Component) {
@@ -125,13 +126,16 @@ export default class ECS {
             throw new Error("Entity does not exist")
 
         const e = this._entities[id]
-        e.removeComponent(Component)
+        const existed = e.removeComponent(Component)
 
-        // Update entity component queries
-        for (const [key, query] of this._queries) {
-            if (query.hasEntity(e) && !e.hasAllComponents(query.componentTypes))
+        if (existed) {
+            // Update entity component queries
+            for (const [key, query] of this._queries) {
+                if (query.hasEntity(e) && !e.hasAllComponents(query.componentTypes))
                 query.removeEntity(e)
+            }
         }
+        return existed
     }
 
     removeEntity(id) {
@@ -148,8 +152,9 @@ export default class ECS {
 
     // Passing in all components, singleton components, and input action list
     execSystems() {
-        this.systems.forEach(s => {
-            s(s.prototype.results.components, this.singletons, this.inputActions)
-        })
+        for (var i = 0; i < this._systems.length; i++) {
+            const s = this._systems[i]
+            s(s.prototype.results.components, this._singletons, this.inputActions)
+        }
     }
 }

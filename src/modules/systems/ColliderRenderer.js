@@ -4,8 +4,8 @@ import RectCollider from "./../components/RectCollider.js"
 function ColliderRenderer (components, singletons) {
     const ctx = singletons.canvas.ctx
 
-    const positions = components[Position]
-    const colliders = components[RectCollider]
+    const positions = components.Position
+    const colliders = components.RectCollider
 
     // Draw colliders
     ctx.strokeStyle = "#03fc24"
@@ -17,5 +17,5 @@ function ColliderRenderer (components, singletons) {
         ctx.strokeRect(pos.x, pos.y, col.width, col.height)
     }
 }
-ColliderRenderer.prototype.requiredComponents = [Position, RectCollider]
+ColliderRenderer.prototype.requiredComponents = ["Position", "RectCollider"]
 export default ColliderRenderer

@@ -14,10 +14,9 @@ ecs.addKeyBindings({
     RIGHT: "d",
     JUMP: " "
 })
-ecs.registerSingleton(new Canvas2D("#canvas"), "canvas")
+const canvas = ecs.registerSingleton(new Canvas2D("#canvas"), "canvas")
 ecs.registerSystem(RenderSystem)
 
-const canvas = ecs.singletons.canvas
 // Generate random rectangles of various sizes
 for (let i = 0; i < 1000; i++) {
     const id = ecs.createEntity()

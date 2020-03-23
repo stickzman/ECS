@@ -6,20 +6,20 @@ export default class Entity {
     }
 
     addComponent(component) {
-        this.components.set(component.constructor, component)
+        this.components.set(component.constructor.name, component)
     }
 
     removeComponent(Component) {
-        this.components.delete(Component)
+        return this.components.delete(Component.name)
     }
 
-    hasComponent(Component) {
-        return this.components.has(Component)
+    hasComponent(compName) {
+        return this.components.has(compName)
     }
 
-    hasAllComponents(Components) {
-        for (var i = 0; i < Components.length; i++) {
-            if (!this.hasComponent(Components[i])) return false
+    hasAllComponents(compNames) {
+        for (var i = 0; i < compNames.length; i++) {
+            if (!this.hasComponent(compNames[i])) return false
         }
         return true
     }
