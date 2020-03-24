@@ -34,7 +34,7 @@ function PlayerController(comps, singletons, actions) {
 ecs.registerSystem({
     requestedComponents: "Position",
     onUpdate: function(comps, singletons, actions) {
-        let input = singletons.input
+        const input = singletons.input
         const { Position : positions  } = comps
         for (var i = 0; i < positions.length; i++) {
             const pos = positions[i]

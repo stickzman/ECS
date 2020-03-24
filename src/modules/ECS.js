@@ -22,15 +22,6 @@ export default class ECS {
     _systems = []
 
     constructor() {
-        // Set up KeyboardEvent listeners for input
-        window.addEventListener("keydown", e => {
-            let action = this._singletons.bindings.getAction(e.key.toLowerCase())
-            if (action) this._singletons.inputStream.addInput(action, true)
-        })
-        window.addEventListener("keyup", e => {
-            let action = this._singletons.bindings.getAction(e.key.toLowerCase())
-            if (action) this._singletons.inputStream.addInput(action, false)
-        })
         this.registerSystem(InputUpdateSystem)
     }
 
