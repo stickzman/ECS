@@ -10,7 +10,7 @@ const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
     _nextEntityId = 0
-    inputActions = {}
+    _inputActions = {}
 
     _queries = new Map()
     _entities = []
@@ -47,13 +47,13 @@ export default class ECS {
                 })
                 continue
             }
-            this.inputActions[action] = action
+            this._inputActions[action] = action
             this._singletons.input.addAction(action)
             this._singletons.bindings.addBinding(action, key)
         }
     }
 
-    createEntity(components) {
+    createEntity() {
         const id = this._nextEntityId++
         this._entities[id] = new Entity(id)
         return id
@@ -67,32 +67,47 @@ export default class ECS {
         return component
     }
 
+    // SYSTEM FORMAT: { requestedComponents, onRegister(), onUpdate() }
     // Systems execute in the order they are registered
     registerSystem(system) {
-        if (typeof system !== "function") {
-            throw new TypeError(`Systems must be functions. Attempted to register: ${system}`)
-        }
+        if (typeof system !== "object")
+            throw new TypeError(`System must be an object`)
 
-        let Components = system.prototype.requiredComponents
+        let Components = system.requestedComponents
+        if (Components === undefined)
+            console.warn("No components requested by system:", system)
 
-        // Create a new query, add to _queries list if not empty
-        if (Components) {
-            Components = (Array.isArray(Components)) ? Components : [Components]
-            system.prototype.results = this._getQuery(Components)
-        } else {
-            system.prototype.results = new Query(Components, this._entities)
-        }
-
+        // Generates/tracks new query if necessary
+        system._query = this._getQuery(Components)
+        Object.freeze(system)
         this._systems.push(system)
+
+        if (system.onRegister) {
+            system.onRegister(
+                system._query.components,
+                this._singletons,
+                this._inputActions
+            )
+        }
     }
 
     _getQuery(Components) {
-        const key = Components.sort().join(",")
+        Components = (typeof Components === "string") ? [Components] : Components
+        const key = this._getQueryKey(Components)
         if (this._queries.has(key)) return this._queries(key)
 
         const query = new Query(Components, this._entities)
-        this._queries.set(key, query)
+        // Add to query list if query is not empty
+        if (query.componentTypes.length) this._queries.set(key, query)
         return query
+    }
+
+    _getQueryKey(Components) {
+        Components = Array.isArray(Components) ? Components : [Components]
+        return Components
+                .map(c => (typeof c === "function") ? c.name : c) // Get names of component classes
+                .sort()
+                .join(",")
     }
 
     addComponent(id, Component, ...args) {
@@ -150,11 +165,14 @@ export default class ECS {
         delete this._entities[id]
     }
 
-    // Passing in all components, singleton components, and input action list
-    execSystems() {
+    // Passing in component arrays, singleton components, and input action list
+    updateSystems() {
         for (var i = 0; i < this._systems.length; i++) {
-            const s = this._systems[i]
-            s(s.prototype.results.components, this._singletons, this.inputActions)
+            this._systems[i].onUpdate(
+                this._systems[i]._query.components,
+                this._singletons,
+                this._inputActions
+            )
         }
     }
 }

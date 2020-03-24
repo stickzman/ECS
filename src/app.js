@@ -15,28 +15,41 @@ ecs.addKeyBindings({
     JUMP: " "
 })
 const canvas = ecs.registerSingleton(new Canvas2D("#canvas"), "canvas")
-ecs.registerSystem(RenderSystem)
-
-// Generate random rectangles of various sizes
-for (let i = 0; i < 1000; i++) {
-    const id = ecs.createEntity()
-    ecs.addComponent(id, Position, Math.random() * canvas.width, Math.random() * canvas.height)
-    ecs.addComponent(id, RectCollider, Math.random() * 100)
-    setTimeout(function () {
-        ecs.removeEntity(id)
-    }, Math.random() * 5000);
-}
 
 const player = ecs.createEntity()
 ecs.addComponent(player, Position, 100, 100)
 ecs.addComponent(player, RectCollider, 30)
-setTimeout(function () {
-    ecs.removeComponent(player, RectCollider)
-}, 1000);
+
+
+const speed = 5
+function PlayerController(comps, singletons, actions) {
+    const { positions: Positions } = comps
+    for (var i = 0; i < positions.length; i++) {
+        if (actions.UP) positions.y -= speed
+        if (actions.DOWN) positions.y += speed
+        if (actions.LEFT) positions.x -= speed
+        if (actions.RIGHT) positions.x += speed
+    }
+}
+ecs.registerSystem({
+    requestedComponents: "Position",
+    onUpdate: function(comps, singletons, actions) {
+        let input = singletons.input
+        const { Position : positions  } = comps
+        for (var i = 0; i < positions.length; i++) {
+            const pos = positions[i]
+            if (input.isPressed(actions.UP)) pos.y -= speed
+            if (input.isPressed(actions.DOWN)) pos.y += speed
+            if (input.isPressed(actions.LEFT)) pos.x -= speed
+            if (input.isPressed(actions.RIGHT)) pos.x += speed
+        }
+    }
+})
+ecs.registerSystem(RenderSystem)
 
 function tick() {
     canvas.clear()
-    ecs.execSystems()
+    ecs.updateSystems()
     window.requestAnimationFrame(tick)
 }
 
