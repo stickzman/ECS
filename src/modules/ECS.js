@@ -10,11 +10,11 @@ const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
     _nextEntityId = 0
-    _inputActions = {}
+    inputActions = {}
 
     _queries = new Map()
     _entities = []
-    _singletons = {
+    singletons = {
         input: new InputState(),
         bindings: new KeyBindings(),
         inputStream: new InputStream()
@@ -38,9 +38,9 @@ export default class ECS {
                 })
                 continue
             }
-            this._inputActions[action] = action
-            this._singletons.input.addAction(action)
-            this._singletons.bindings.addBinding(action, key)
+            this.inputActions[action] = action
+            this.singletons.input.addAction(action)
+            this.singletons.bindings.addBinding(action, key)
         }
     }
 
@@ -54,7 +54,7 @@ export default class ECS {
         if (typeof component !== "object")
             throw new TypeError("Singleton components must be object")
         name = name || component.constructor.name
-        this._singletons[name] = component
+        this.singletons[name] = component
         return component
     }
 
@@ -76,8 +76,8 @@ export default class ECS {
         if (system.onRegister) {
             system.onRegister(
                 system._query.components,
-                this._singletons,
-                this._inputActions
+                this.singletons,
+                this.inputActions
             )
         }
     }
@@ -160,9 +160,9 @@ export default class ECS {
     updateSystems() {
         for (var i = 0; i < this._systems.length; i++) {
             this._systems[i].onUpdate(
+                this,
                 this._systems[i]._query.components,
-                this._singletons,
-                this._inputActions
+                this._systems[i]._query.entities
             )
         }
     }

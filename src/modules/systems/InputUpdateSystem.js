@@ -11,12 +11,12 @@ export default {
             if (action) singletons.inputStream.addInput(action, false)
         })
     },
-    onUpdate: function(components, singletons) {
-        const inputStream = singletons.inputStream
-        const state = singletons.input.state
+    onUpdate: function(ecs, COLUMNS) {
+        const inputStream = ecs.singletons.inputStream
+        const state = ecs.singletons.input.state
 
         // Reset inputState for new frame
-        singletons.input.reset()
+        ecs.singletons.input.reset()
 
         // Process inputObjs in order, update inputState
         while (inputStream.length()) {

@@ -1,10 +1,10 @@
 export default {
     requestedComponents: ["Position", "RectCollider"],
-    onUpdate: function(components, singletons) {
-        const ctx = singletons.canvas.ctx
+    onUpdate: function(ecs, COLUMNS) {
+        const ctx = ecs.singletons.canvas.ctx
 
-        const positions = components.Position
-        const colliders = components.RectCollider
+        const positions = COLUMNS.Position
+        const colliders = COLUMNS.RectCollider
 
         // Draw colliders
         ctx.strokeStyle = "#03fc24"
