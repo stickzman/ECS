@@ -1,6 +1,7 @@
 export default {
     requestedComponents: null,
-    onRegister: function(components, singletons) {
+    onInit: function(ecs) {
+        const singletons = ecs.singletons
         // Set up KeyboardEvent listeners for input
         window.addEventListener("keydown", e => {
             let action = singletons.bindings.getAction(e.key.toLowerCase())

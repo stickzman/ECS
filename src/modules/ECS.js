@@ -72,14 +72,6 @@ export default class ECS {
         system._query = this._getQuery(Components)
         Object.freeze(system)
         this._systems.push(system)
-
-        if (system.onRegister) {
-            system.onRegister(
-                system._query.components,
-                this.singletons,
-                this.inputActions
-            )
-        }
     }
 
     _getQuery(Components) {
@@ -156,8 +148,26 @@ export default class ECS {
         delete this._entities[id]
     }
 
-    // Passing in component arrays, singleton components, and input action list
+    init() {
+        for (var i = 0; i < this._systems.length; i++) {
+            if (!this._systems[i].onInit) continue
+            this._systems[i].onInit(
+                this,
+                this._systems[i]._query.components,
+                this._systems[i]._query.entities
+            )
+        }
+    }
+
+    // Call init function first time systems updated, then swap to real function
     updateSystems() {
+        this.init()
+        this.updateSystems = this._updateSystems
+        this._updateSystems()
+    }
+
+    // Passing in component arrays, singleton components, and input action list
+    _updateSystems() {
         for (var i = 0; i < this._systems.length; i++) {
             this._systems[i].onUpdate(
                 this,
