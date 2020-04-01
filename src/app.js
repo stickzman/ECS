@@ -24,7 +24,7 @@ ecs.addComponent(player, RectCollider, 30)
 const speed = 5
 function PlayerController(comps, singletons, actions) {
     const { positions: Positions } = comps
-    for (var i = 0; i < positions.length; i++) {
+    for (let i = 0; i < positions.length; i++) {
         if (actions.UP) positions.y -= speed
         if (actions.DOWN) positions.y += speed
         if (actions.LEFT) positions.x -= speed
@@ -37,7 +37,7 @@ ecs.registerSystem({
         const input = ecs.singletons.input
         const actions = ecs.inputActions
         const { Position : positions  } = COLUMNS
-        for (var i = 0; i < positions.length; i++) {
+        for (let i = 0; i < positions.length; i++) {
             const pos = positions[i]
             if (input.isPressed(actions.UP)) pos.y -= speed
             if (input.isPressed(actions.DOWN)) pos.y += speed

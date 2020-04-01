@@ -18,8 +18,8 @@ export default class Entity {
     }
 
     hasAllComponents(compNames) {
-        for (var i = 0; i < compNames.length; i++) {
-            if (!this.hasComponent(compNames[i])) return false
+        for (const name of compNames) {
+            if (!this.hasComponent(name)) return false
         }
         return true
     }

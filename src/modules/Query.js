@@ -8,7 +8,7 @@ export default class Query {
     constructor(Components, entities) {
         Components = (Components) ? Components : []
         // Initialize componentTypes and component arrays with Component name
-        for (var i = 0; i < Components.length; i++) {
+        for (let i = 0; i < Components.length; i++) {
             if (typeof Components[i] === "function") {
                 Components[i] = Components[i].name
             } else if (typeof Components[i] !== "string") {
@@ -34,9 +34,8 @@ export default class Query {
 
         this._entityMap.set(entity.id, entity)
         this.entities.push(entity)
-        for (var i = 0; i < this.componentTypes.length; i++) {
-            const c = this.componentTypes[i]
-            this.components[c].push(entity.components.get(c))
+        for (const compType of this.componentTypes) {
+            this.components[compType].push(entity.components.get(compType))
         }
     }
 

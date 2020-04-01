@@ -69,7 +69,7 @@ export default class ECS {
             console.warn("No components requested by system:", system)
 
         // Generates/tracks new query if necessary
-        system._query = this._getQuery(Components)
+        system.query = this._getQuery(Components)
         Object.freeze(system)
         this._systems.push(system)
     }
@@ -139,22 +139,24 @@ export default class ECS {
     removeEntity(id) {
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
-        if (this._entities[id] === undefined) return
+        if (this._entities[id] === undefined) return false
 
         const e = this._entities[id]
         for (const [key, query] of this._queries) {
             query.removeEntity(e)
         }
         delete this._entities[id]
+        return true
     }
 
     init() {
-        for (var i = 0; i < this._systems.length; i++) {
-            if (!this._systems[i].onInit) continue
-            this._systems[i].onInit(
+        // Call every system's init function
+        for (const system of this._systems) {
+            if (!system.onInit) continue
+            system.onInit(
                 this,
-                this._systems[i]._query.components,
-                this._systems[i]._query.entities
+                system.query.components,
+                system.query.entities
             )
         }
     }
@@ -168,11 +170,11 @@ export default class ECS {
 
     // Passing in component arrays, singleton components, and input action list
     _updateSystems() {
-        for (var i = 0; i < this._systems.length; i++) {
-            this._systems[i].onUpdate(
+        for (const system of this._systems) {
+            system.onUpdate(
                 this,
-                this._systems[i]._query.components,
-                this._systems[i]._query.entities
+                system.query.components,
+                system.query.entities
             )
         }
     }
