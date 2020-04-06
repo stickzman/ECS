@@ -1,5 +1,6 @@
 import Entity from "./Entity.js"
 import Query from "./Query.js"
+import EventManager from "./EventManager.js"
 import KeyBindings from "./components/KeyBindings.js"
 import InputStream from "./components/InputStream.js"
 import InputState from "./components/InputState.js"
@@ -9,20 +10,37 @@ const ENTITY_ID_NON_INT = "Entity ID must be an integer"
 const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
-    _nextEntityId = 0
     inputActions = {}
-
-    _queries = new Map()
-    _entities = []
     singletons = {
         input: new InputState(),
         bindings: new KeyBindings(),
         inputStream: new InputStream()
     }
+
+    _nextEntityId = 0
+    _eventManager = new EventManager()
+    _queries = new Map()
+    _entities = []
     _systems = []
 
     constructor() {
         this.registerSystem(InputUpdateSystem)
+    }
+
+    on(eventType, callback) {
+        this._eventManager.addObserver(eventType, callback)
+    }
+
+    off(eventType, callback) {
+        this._eventManager.removeObserver(eventType, callback)
+    }
+
+    emit(eventType, data) {
+        this._eventManager.addToQueue(eventType, data)
+    }
+
+    emitImmediate(eventType, data) {
+        this._eventManager.dispatchEvent(eventType, data)
     }
 
     // Expect format for bindings is {ACTION_NAME: KEY}
@@ -170,12 +188,14 @@ export default class ECS {
 
     // Passing in component arrays, singleton components, and input action list
     _updateSystems() {
+        if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
             system.onUpdate(
                 this,
                 system.query.components,
                 system.query.entities
             )
+            if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         }
     }
 }
