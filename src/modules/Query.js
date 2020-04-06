@@ -1,9 +1,9 @@
 const COMP_NON_CLASS = "Component must be a class or class name (string)"
 
 export default class Query {
-    _entityMap = new Map()
     entities = []
     components = {}
+    _entityMap = new Map()
 
     constructor(Components, entities) {
         Components = (Components) ? Components : []
