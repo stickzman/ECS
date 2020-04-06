@@ -1,36 +1,37 @@
 export default class InputSystem {
     requestedComponents = null
-    inputStream = new InputStream()
-    bindings = new KeyBindings()
 
     constructor(ecs) {
         this.ecs = ecs
         this.ecs.registerSingleton({}, "inputActions")
         this.ecs.registerSingleton(new InputState(), "input")
+        this.ecs.registerSingleton(new InputStream(), "inputStream")
+        this.ecs.registerSingleton(new KeyBindings(), "bindings")
         this.ecs.registerSystem(this)
     }
 
     onInit(ecs) {
         // Set up KeyboardEvent listeners for input
         window.addEventListener("keydown", e => {
-            let action = this.bindings.getAction(e.key.toLowerCase())
-            if (action) this.inputStream.addInput(action, true)
+            let action = ecs.singletons.bindings.getAction(e.key.toLowerCase())
+            if (action) ecs.singletons.inputStream.addInput(action, true)
         })
         window.addEventListener("keyup", e => {
-            let action = this.bindings.getAction(e.key.toLowerCase())
-            if (action) this.inputStream.addInput(action, false)
+            let action = ecs.singletons.bindings.getAction(e.key.toLowerCase())
+            if (action) ecs.singletons.inputStream.addInput(action, false)
         })
     }
 
     onUpdate(ecs) {
         const state = ecs.singletons.input.state
+        const inputStream = ecs.singletons.inputStream
 
         // Reset inputState for new frame
         ecs.singletons.input.reset()
 
         // Process inputObjs in order, update inputState
-        while (this.inputStream.length()) {
-            const newInput = this.inputStream.nextInput()
+        while (inputStream.length()) {
+            const newInput = inputStream.nextInput()
             const input = state[newInput.action]
             if (input.pressed !== newInput.pressed) input.changed = true
             input.pressed = newInput.pressed
@@ -52,7 +53,7 @@ export default class InputSystem {
             }
             this.ecs.singletons.inputActions[action] = action
             this.ecs.singletons.input.addAction(action)
-            this.bindings.addBinding(action, key)
+            this.ecs.singletons.bindings.addBinding(action, key)
         }
     }
 }
