@@ -1,7 +1,7 @@
 const COMP_NON_CLASS = "Component must be a class or class name (string)"
 
 export default class Query {
-    entities = []
+    _entities = []
     components = {}
     _entityMap = new Map()
 
@@ -19,17 +19,17 @@ export default class Query {
         this.componentTypes = Components
 
         // Find relevant entities and add their components to the query
-        entities.forEach(entity => {
-            if (!entity.hasAllComponents(Components)) return
+        for (const entity of entities) {
+            if (!entity.hasAllComponents(Components)) continue
             this.addEntity(entity)
-        })
+        }
     }
 
     addEntity(entity) {
         if (this.hasEntity(entity)) return
 
         this._entityMap.set(entity.id, entity)
-        this.entities.push(entity)
+        this._entities.push(entity)
         for (const compType of this.componentTypes) {
             this.components[compType].push(entity.components.get(compType))
         }
@@ -42,8 +42,8 @@ export default class Query {
     removeEntity(entity) {
         if (!this._entityMap.delete(entity.id)) return
 
-        const i = this.entities.indexOf(entity)
-        this.entities.splice(i, 1)
+        const i = this._entities.indexOf(entity)
+        this._entities.splice(i, 1)
         this.componentTypes.forEach(c => {
             this.components[c].splice(i, 1)
         })

@@ -1,21 +1,12 @@
 import Entity from "./Entity.js"
 import Query from "./Query.js"
 import EventManager from "./EventManager.js"
-import KeyBindings from "./components/KeyBindings.js"
-import InputStream from "./components/InputStream.js"
-import InputState from "./components/InputState.js"
-import InputUpdateSystem from "./systems/InputUpdateSystem.js"
 
 const ENTITY_ID_NON_INT = "Entity ID must be an integer"
 const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
-    inputActions = {}
-    singletons = {
-        input: new InputState(),
-        bindings: new KeyBindings(),
-        inputStream: new InputStream()
-    }
+    singletons = {}
 
     _nextEntityId = 0
     _eventManager = new EventManager()
@@ -23,28 +14,7 @@ export default class ECS {
     _entities = []
     _systems = []
 
-    constructor() {
-        this.registerSystem(InputUpdateSystem)
-    }
-
-    // Expect format for bindings is {ACTION_NAME: KEY}
-    addKeyBindings(bindings) {
-        if (typeof bindings !== "object") return
-
-        for (const action in bindings) {
-            let key = bindings[action]
-            if (typeof key !== "string") {
-                console.error(`Key bindings must be strings. Cannot bind:`, {
-                    action: action,
-                    key: key
-                })
-                continue
-            }
-            this.inputActions[action] = action
-            this.singletons.input.addAction(action)
-            this.singletons.bindings.addBinding(action, key)
-        }
-    }
+    constructor() { }
 
     // SYSTEM FORMAT: { requestedComponents, onRegister(), onUpdate() }
     // Systems execute in the order they are registered
@@ -179,11 +149,7 @@ export default class ECS {
         // Call every system's init function
         for (const system of this._systems) {
             if (!system.onInit) continue
-            system.onInit(
-                this,
-                system.query.components,
-                system.query.entities
-            )
+            system.onInit(this, system.query.components)
         }
     }
 
@@ -191,11 +157,7 @@ export default class ECS {
     _updateSystems() {
         if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
-            system.onUpdate(
-                this,
-                system.query.components,
-                system.query.entities
-            )
+            system.onUpdate(this, system.query.components)
             if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         }
     }
