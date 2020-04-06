@@ -25,10 +25,6 @@ export default class Query {
         })
     }
 
-    hasEntity(entity) {
-        return this._entityMap.has(entity.id)
-    }
-
     addEntity(entity) {
         if (this.hasEntity(entity)) return
 
@@ -37,6 +33,10 @@ export default class Query {
         for (const compType of this.componentTypes) {
             this.components[compType].push(entity.components.get(compType))
         }
+    }
+
+    hasEntity(entity) {
+        return this._entityMap.has(entity.id)
     }
 
     removeEntity(entity) {

@@ -27,22 +27,6 @@ export default class ECS {
         this.registerSystem(InputUpdateSystem)
     }
 
-    on(eventType, callback) {
-        this._eventManager.addObserver(eventType, callback)
-    }
-
-    off(eventType, callback) {
-        this._eventManager.removeObserver(eventType, callback)
-    }
-
-    emit(eventType, data) {
-        this._eventManager.addToQueue(eventType, data)
-    }
-
-    emitImmediate(eventType, data) {
-        this._eventManager.dispatchEvent(eventType, data)
-    }
-
     // Expect format for bindings is {ACTION_NAME: KEY}
     addKeyBindings(bindings) {
         if (typeof bindings !== "object") return
@@ -60,20 +44,6 @@ export default class ECS {
             this.singletons.input.addAction(action)
             this.singletons.bindings.addBinding(action, key)
         }
-    }
-
-    createEntity() {
-        const id = this._nextEntityId++
-        this._entities[id] = new Entity(id)
-        return id
-    }
-
-    registerSingleton(component, name) {
-        if (typeof component !== "object")
-            throw new TypeError("Singleton components must be object")
-        name = name || component.constructor.name
-        this.singletons[name] = component
-        return component
     }
 
     // SYSTEM FORMAT: { requestedComponents, onRegister(), onUpdate() }
@@ -111,6 +81,33 @@ export default class ECS {
                 .join(",")
     }
 
+    registerSingleton(component, name) {
+        if (typeof component !== "object")
+            throw new TypeError("Singleton components must be object")
+        name = name || component.constructor.name
+        this.singletons[name] = component
+        return component
+    }
+
+    createEntity() {
+        const id = this._nextEntityId++
+        this._entities[id] = new Entity(id)
+        return id
+    }
+
+    removeEntity(id) {
+        if (!Number.isInteger(id))
+            throw new Error(ENTITY_ID_NON_INT)
+        if (this._entities[id] === undefined) return false
+
+        const e = this._entities[id]
+        for (const [key, query] of this._queries) {
+            query.removeEntity(e)
+        }
+        delete this._entities[id]
+        return true
+    }
+
     addComponent(id, Component, ...args) {
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
@@ -122,6 +119,7 @@ export default class ECS {
         // Create component and add to entity
         const e = this._entities[id]
         const comp = new Component(...args)
+        comp._entity = e
         Object.seal(comp)
         e.addComponent(comp)
 
@@ -154,17 +152,27 @@ export default class ECS {
         return existed
     }
 
-    removeEntity(id) {
-        if (!Number.isInteger(id))
-            throw new Error(ENTITY_ID_NON_INT)
-        if (this._entities[id] === undefined) return false
+    on(eventType, callback) {
+        this._eventManager.addObserver(eventType, callback)
+    }
 
-        const e = this._entities[id]
-        for (const [key, query] of this._queries) {
-            query.removeEntity(e)
-        }
-        delete this._entities[id]
-        return true
+    off(eventType, callback) {
+        this._eventManager.removeObserver(eventType, callback)
+    }
+
+    emit(eventType, data) {
+        this._eventManager.addToQueue(eventType, data)
+    }
+
+    emitImmediate(eventType, data) {
+        this._eventManager.dispatchEvent(eventType, data)
+    }
+
+    // Call init function first time systems updated, then swap to real function
+    updateSystems() {
+        this.init()
+        this.updateSystems = this._updateSystems
+        this._updateSystems()
     }
 
     init() {
@@ -177,13 +185,6 @@ export default class ECS {
                 system.query.entities
             )
         }
-    }
-
-    // Call init function first time systems updated, then swap to real function
-    updateSystems() {
-        this.init()
-        this.updateSystems = this._updateSystems
-        this._updateSystems()
     }
 
     // Passing in component arrays, singleton components, and input action list

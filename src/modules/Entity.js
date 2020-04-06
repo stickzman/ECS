@@ -13,14 +13,14 @@ export default class Entity {
         return this.components.delete(Component.name)
     }
 
-    hasComponent(compName) {
-        return this.components.has(compName)
-    }
-
     hasAllComponents(compNames) {
         for (const name of compNames) {
             if (!this.hasComponent(name)) return false
         }
         return true
+    }
+
+    hasComponent(compName) {
+        return this.components.has(compName)
     }
 }

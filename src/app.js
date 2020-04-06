@@ -48,6 +48,8 @@ ecs.registerSystem({
 })
 ecs.registerSystem(RenderSystem)
 
+ecs.on("testEvent", comp => console.log(comp._entity))
+
 function tick() {
     canvas.clear()
     ecs.updateSystems()
