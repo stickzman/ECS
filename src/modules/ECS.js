@@ -27,7 +27,7 @@ export default class ECS {
             console.warn("No components requested by system:", system)
 
         // Generates/tracks new query if necessary
-        system.query = this._getQuery(Components)
+        system._query = this._getQuery(Components)
         Object.freeze(system)
         this._systems.push(system)
     }
@@ -149,7 +149,7 @@ export default class ECS {
         // Call every system's init function
         for (const system of this._systems) {
             if (!system.onInit) continue
-            system.onInit(this, system.query.components)
+            system.onInit(this, system._query.components)
         }
     }
 
@@ -157,7 +157,7 @@ export default class ECS {
     _updateSystems() {
         if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
-            system.onUpdate(this, system.query.components)
+            system.onUpdate(this, system._query.components)
             if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         }
     }
