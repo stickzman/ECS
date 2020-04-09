@@ -1,5 +1,7 @@
 export default {
-    requestedComponents: ["Position", "RectCollider"],
+    query: {
+        components: ["Position", "RectCollider"]
+    },
     onUpdate: function(ecs, COLUMNS) {
         const ctx = ecs.singletons.canvas.ctx
 

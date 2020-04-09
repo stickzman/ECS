@@ -22,33 +22,35 @@ export default class ECS {
         if (typeof system !== "object")
             throw new TypeError(`System must be an object`)
 
-        let Components = system.requestedComponents
-        if (Components === undefined)
-            console.warn("No components requested by system:", system)
+        if (system.query) {
+            const Components = system.query.components
+            const tags = system.query.tags
 
-        // Generates/tracks new query if necessary
-        system._query = this._getQuery(Components)
+            // Generates/tracks new query if necessary
+            system._query = this._getQuery(Components, tags)
+        }
+
         Object.freeze(system)
         this._systems.push(system)
     }
 
-    _getQuery(Components) {
-        Components = (typeof Components === "string") ? [Components] : Components
-        const key = this._getQueryKey(Components)
+    _getQuery(Components, tags) {
+        const key = this._getQueryKey(Components, tags)
         if (this._queries.has(key)) return this._queries(key)
 
-        const query = new Query(Components, this._entities)
+        const query = new Query(this._entities, Components, tags)
         // Add to query list if query is not empty
         if (query.componentTypes.length) this._queries.set(key, query)
         return query
     }
 
-    _getQueryKey(Components) {
-        Components = Array.isArray(Components) ? Components : [Components]
-        return Components
-                .map(c => (typeof c === "function") ? c.name : c) // Get names of component classes
-                .sort()
-                .join(",")
+    _getQueryKey(Components, tags) {
+        Components = (Array.isArray(Components)) ? Components : [Components]
+        tags = (Array.isArray(tags)) ? tags : [tags]
+
+        // Get names of component classes
+        Components = Components.map(c => (typeof c === "function") ? c.name : c)
+        return Components.sort().join(",") + "#" + tags.sort().join(",")
     }
 
     registerSingleton(component, name) {
@@ -78,6 +80,36 @@ export default class ECS {
         return true
     }
 
+    addTag(id, tag) {
+        if (!Number.isInteger(id))
+            throw new Error(ENTITY_ID_NON_INT)
+        if (this._entities[id] === undefined) return false
+
+        this._entities[id].addTag(tag)
+        for (const [key, query] of this._queries) {
+            if (query.hasEntity(e)) continue
+            if (query.match(e)) query.addEntity(e)
+        }
+    }
+
+    removeTag(id, tag) {
+        if (!Number.isInteger(id))
+            throw new Error(ENTITY_ID_NON_INT)
+        if (this._entities[id] === undefined) return false
+
+        const e = this._entities[id]
+        const existed = e.removeTag(tag)
+
+        if (existed) {
+            // Update entity component queries
+            for (const [key, query] of this._queries) {
+                if (!query.hasEntity(e) || query.match(e)) continue
+                query.removeEntity(e)
+            }
+        }
+        return existed
+    }
+
     addComponent(id, Component, ...args) {
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
@@ -96,7 +128,7 @@ export default class ECS {
         // Update entity component queries
         for (const [key, query] of this._queries) {
             if (query.hasEntity(e)) continue
-            if (e.hasAllComponents(query.componentTypes)) query.addEntity(e)
+            if (query.match(e)) query.addEntity(e)
         }
         return comp
     }
@@ -115,7 +147,7 @@ export default class ECS {
         if (existed) {
             // Update entity component queries
             for (const [key, query] of this._queries) {
-                if (query.hasEntity(e) && !e.hasAllComponents(query.componentTypes))
+                if (!query.hasEntity(e) || query.match(e)) continue
                 query.removeEntity(e)
             }
         }
@@ -149,7 +181,10 @@ export default class ECS {
         // Call every system's init function
         for (const system of this._systems) {
             if (!system.onInit) continue
-            system.onInit(this, system._query.components)
+            system.onInit(
+                this,
+                (system._query) ? system._query.components : undefined
+            )
         }
     }
 
@@ -157,7 +192,10 @@ export default class ECS {
     _updateSystems() {
         if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
-            system.onUpdate(this, system._query.components)
+            system.onUpdate(
+                this,
+                (system._query) ? system._query.components : undefined
+            )
             if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         }
     }

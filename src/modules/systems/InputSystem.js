@@ -1,6 +1,4 @@
 export default class InputSystem {
-    requestedComponents = null
-
     constructor(ecs) {
         this.ecs = ecs
         this.ecs.registerSingleton({}, "inputActions")

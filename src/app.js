@@ -21,11 +21,21 @@ const canvas = ecs.registerSingleton(new Canvas2D("#canvas"), "canvas")
 const player = ecs.createEntity()
 ecs.addComponent(player, Position, 100, 100)
 ecs.addComponent(player, RectCollider, 30)
+ecs.addTag(player, "player")
+
+for (let i = 0; i < 10; i++) {
+    const e = ecs.createEntity()
+    ecs.addComponent(e, Position, Math.random() * 500, Math.random() * 500)
+    ecs.addComponent(e, RectCollider, 30)
+}
 
 
 const speed = 5
 ecs.registerSystem({
-    requestedComponents: "Position",
+    query: {
+        components: "Position",
+        tags: "player"
+    },
     onUpdate: function(ecs, COLUMNS) {
         const input = ecs.singletons.input
         const actions = ecs.singletons.inputActions
