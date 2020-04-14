@@ -13,10 +13,11 @@ export default class ECS {
     _queries = new Map()
     _entities = []
     _systems = []
+    _lastTickTime = null
 
     constructor() { }
 
-    // SYSTEM FORMAT: { requestedComponents, onRegister(), onUpdate() }
+    // SYSTEM FORMAT: { requestedComponents, init(), update() }
     // Systems execute in the order they are registered
     registerSystem(system) {
         if (typeof system !== "object")
@@ -179,23 +180,29 @@ export default class ECS {
     init() {
         // Call every system's init function
         for (const system of this._systems) {
-            if (!system.onInit) continue
-            system.onInit(
+            if (!system.init) continue
+            system.init(
                 this,
                 (system._query) ? system._query.components : undefined
             )
         }
+        this._lastTickTime = performance.now()
     }
 
     // Passing in component arrays, singleton components, and input action list
     _updateSystems() {
+        const currTime = performance.now()
+        const deltaTime = currTime - this._lastTickTime
         if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
-            system.onUpdate(
+            system.update(
                 this,
-                (system._query) ? system._query.components : undefined
+                (system._query) ? system._query.components : undefined,
+                deltaTime,
+                currTime
             )
             if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         }
+        this._lastTickTime = currTime
     }
 }
