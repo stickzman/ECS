@@ -86,7 +86,8 @@ export default class ECS {
             throw new Error(ENTITY_ID_NON_INT)
         if (this._entities[id] === undefined) return false
 
-        this._entities[id].addTag(tag)
+        const e = this._entities[id]
+        e.addTag(tag)
         for (const [key, query] of this._queries) {
             if (query.hasEntity(e)) continue
             if (query.match(e)) query.addEntity(e)

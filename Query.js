@@ -18,7 +18,7 @@ export default class Query {
             }
             this.components[Components[i]] = []
         }
-        this._componentTypes = Components
+        this.componentTypes = Components
 
         if (tags) this._tags = (Array.isArray(tags)) ? tags : [tags]
 
@@ -35,7 +35,7 @@ export default class Query {
 
         this._entityMap.set(entity.id, entity)
         this._entities.push(entity)
-        for (const compType of this._componentTypes) {
+        for (const compType of this.componentTypes) {
             this.components[compType].push(entity.components.get(compType))
         }
     }
@@ -49,12 +49,12 @@ export default class Query {
 
         const i = this._entities.indexOf(entity)
         this._entities.splice(i, 1)
-        this._componentTypes.forEach(c => {
+        this.componentTypes.forEach(c => {
             this.components[c].splice(i, 1)
         })
     }
 
     match(entity) {
-        return entity.hasAllTags(this._tags) && entity.hasAllComponents(this._componentTypes)
+        return entity.hasAllTags(this._tags) && entity.hasAllComponents(this.componentTypes)
     }
 }
