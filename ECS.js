@@ -23,25 +23,19 @@ export default class ECS {
         if (typeof system !== "object")
             throw new TypeError(`System must be an object`)
 
-        if (system.query) {
-            const Components = system.query.components
-            const tags = system.query.tags
-
-            // Generates/tracks new query if necessary
-            system._query = this._getQuery(Components, tags)
-        }
-
-        Object.freeze(system)
         this._systems.push(system)
     }
 
-    _getQuery(Components, tags) {
+    getQuery(query) {
+        const Components = query.components
+        const tags = query.tags
+
         const key = this._getQueryKey(Components, tags)
         if (this._queries.has(key)) return this._queries(key)
 
-        const query = new Query(this._entities, Components, tags)
-        // Add to query list if query is not empty
-        if (query.componentTypes.length) this._queries.set(key, query)
+        query = new Query(this._entities, Components, tags)
+        // Add to query list so it can be updated with future changes
+        this._queries.set(key, query)
         return query
     }
 
@@ -182,10 +176,7 @@ export default class ECS {
         // Call every system's init function
         for (const system of this._systems) {
             if (!system.init) continue
-            system.init(
-                this,
-                (system._query) ? system._query.components : undefined
-            )
+            system.init(this)
         }
         this._lastTickTime = performance.now()
     }
@@ -196,12 +187,7 @@ export default class ECS {
         const deltaTime = currTime - this._lastTickTime
         if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
-            system.update(
-                this,
-                (system._query) ? system._query.components : undefined,
-                deltaTime,
-                currTime
-            )
+            system.update(this, deltaTime, currTime)
             if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
         }
         this._lastTickTime = currTime
