@@ -122,6 +122,7 @@ export default class ECS {
         const e = this._entities[id]
         const comp = new Component(...args)
         comp._entity = e
+        Object.seal(comp)
         e.addComponent(comp)
 
         // Update entity component queries
