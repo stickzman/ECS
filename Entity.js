@@ -29,8 +29,13 @@ export default class Entity {
         this.components.set(component.constructor.name, component)
     }
 
-    removeComponent(Component) {
-        return this.components.delete(Component.name)
+    removeComponent(comp) {
+        comp = (typeof comp === "function") ? comp.name : comp
+        return this.components.delete(comp)
+    }
+
+    hasComponent(compName) {
+        return this.components.has(compName)
     }
 
     hasAllComponents(compNames) {
@@ -40,7 +45,18 @@ export default class Entity {
         return true
     }
 
-    hasComponent(compName) {
-        return this.components.has(compName)
+    hasSomeComponents(compNames) {
+        for (const name of compNames) {
+            if (this.hasComponent(name)) return true
+        }
+        return false
     }
+
+    hasNoneComponents(compNames) {
+        for (const name of compNames) {
+            if (this.hasComponent(name)) return false
+        }
+        return true
+    }
+
 }

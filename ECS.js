@@ -27,25 +27,29 @@ export default class ECS {
     }
 
     getQuery(query) {
-        const Components = query.components
-        const tags = query.tags
-
-        const key = this._getQueryKey(Components, tags)
+        const key = this._getQueryKey(query)
         if (this._queries.has(key)) return this._queries(key)
 
-        query = new Query(this._entities, Components, tags)
+        query = new Query(this._entities, query)
         // Add to query list so it can be updated with future changes
         this._queries.set(key, query)
         return query
     }
 
-    _getQueryKey(Components, tags) {
-        Components = (Array.isArray(Components)) ? Components : [Components]
-        tags = (Array.isArray(tags)) ? tags : [tags]
+    _getQueryKey(query) {
+        let reqComps = (Array.isArray(query.all)) ? query.all : [query.all]
+        let optComps = (Array.isArray(query.optional)) ? query.optional : [query.optional]
+        let bannedComps = (Array.isArray(query.none)) ? query.none : [query.none]
+        const tags = (Array.isArray(query.tags)) ? query.tags : [query.tags]
 
         // Get names of component classes
-        Components = Components.map(c => (typeof c === "function") ? c.name : c)
-        return Components.sort().join(",") + "#" + tags.sort().join(",")
+        reqComps = reqComps.map(c => (typeof c === "function") ? c.name : c)
+        optComps = optComps.map(c => (typeof c === "function") ? c.name : c)
+        bannedComps = bannedComps.map(c => (typeof c === "function") ? c.name : c)
+        return reqComps.sort().join(",")
+                + "|" + optComps.sort().join(",")
+                + "!" + bannedComps.sort().join(",")
+                + "#" + tags.sort().join(",")
     }
 
     registerSingleton(component, name) {
@@ -122,8 +126,11 @@ export default class ECS {
 
         // Update entity component queries
         for (const [key, query] of this._queries) {
-            if (query.hasEntity(e)) continue
-            if (query.match(e)) query.addEntity(e)
+            if (query.match(e)) {
+                query.addEntity(e)
+            } else {
+                query.removeEntity(e)
+            }
         }
         return comp
     }
@@ -131,7 +138,7 @@ export default class ECS {
     removeComponent(id, Component) {
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
-        if (typeof Component !== "function")
+        if (typeof Component !== "function" && typeof Component !== "string")
             throw new Error(COMP_NON_CLASS)
         if (this._entities[id] === undefined)
             throw new Error("Entity does not exist")
@@ -142,8 +149,11 @@ export default class ECS {
         if (existed) {
             // Update entity component queries
             for (const [key, query] of this._queries) {
-                if (!query.hasEntity(e) || query.match(e)) continue
-                query.removeEntity(e)
+                if (query.match(e)) {
+                    query.addEntity(e)
+                } else {
+                    query.removeEntity(e)
+                }
             }
         }
         return existed
