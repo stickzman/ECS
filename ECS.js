@@ -55,6 +55,7 @@ export default class ECS {
     createEntity() {
         const id = this._nextEntityId++
         this._entities[id] = new Entity(id)
+        this.emitImmediate("Entity_Created", { entity: this._entities[id], id: id })
         return id
     }
 
@@ -68,6 +69,7 @@ export default class ECS {
             query.removeEntity(e)
         }
         delete this._entities[id]
+        this.emitImmediate("Entity_Deleted", { entity: e, id: id })
         return true
     }
 
