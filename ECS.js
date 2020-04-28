@@ -6,7 +6,7 @@ const ENTITY_ID_NON_INT = "Entity ID must be an integer"
 const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
-    singletons = {}
+    state = {}
 
     _nextEntityId = 0
     _eventManager = new EventManager()
@@ -50,14 +50,6 @@ export default class ECS {
                 + "|" + optComps.sort().join(",")
                 + "!" + bannedComps.sort().join(",")
                 + "#" + tags.sort().join(",")
-    }
-
-    registerSingleton(component, name) {
-        if (typeof component !== "object")
-            throw new TypeError("Singleton components must be object")
-        name = name || component.constructor.name
-        this.singletons[name] = component
-        return component
     }
 
     createEntity() {
