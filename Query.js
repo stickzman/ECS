@@ -60,6 +60,10 @@ export default class Query {
         }
     }
 
+    get length() {
+        return this._entities.length
+    }
+
     hasEntity(entity) {
         return this._entityMap.has(entity.id)
     }
