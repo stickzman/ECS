@@ -31,7 +31,9 @@ export default class Entity {
 
     removeComponent(comp) {
         comp = (typeof comp === "function") ? comp.name : comp
-        return this.components.delete(comp)
+        const component = this.components.get(comp)
+        this.components.delete(comp)
+        return component
     }
 
     hasComponent(compName) {

@@ -17,7 +17,7 @@ export default class ECS {
 
     constructor() { }
 
-    // SYSTEM FORMAT: { requestedComponents, init(), update() }
+    // SYSTEM FORMAT: { init(), update() }
     // Systems execute in the order they are registered
     registerSystem(system) {
         if (typeof system !== "object")
@@ -82,6 +82,8 @@ export default class ECS {
             if (query.hasEntity(e)) continue
             if (query.match(e)) query.addEntity(e)
         }
+
+        this.emitImmediate(tag + "_Added", { tag: tag, entity: e })
     }
 
     removeTag(id, tag) {
@@ -98,6 +100,8 @@ export default class ECS {
                 if (!query.hasEntity(e) || query.match(e)) continue
                 query.removeEntity(e)
             }
+
+            this.emitImmediate(tag + "_Removed", { tag: tag, entity: e })
         }
         return existed
     }
@@ -125,6 +129,8 @@ export default class ECS {
                 query.removeEntity(e)
             }
         }
+
+        this.emitImmediate(Component.name + "_Added", { component: comp, entity: e })
         return comp
     }
 
@@ -137,9 +143,9 @@ export default class ECS {
             throw new Error("Entity does not exist")
 
         const e = this._entities[id]
-        const existed = e.removeComponent(Component)
+        const removedComp = e.removeComponent(Component)
 
-        if (existed) {
+        if (removedComp) {
             // Update entity component queries
             for (const [key, query] of this._queries) {
                 if (query.match(e)) {
@@ -148,8 +154,11 @@ export default class ECS {
                     query.removeEntity(e)
                 }
             }
+
+            this.emitImmediate((Component.name || Component) + "_Removed",
+                                { component: removedComp, entity: e })
         }
-        return existed
+        return removedComp !== undefined
     }
 
     on(eventType, callback) {
