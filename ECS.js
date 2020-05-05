@@ -7,6 +7,7 @@ const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
     state = {}
+    fixedTimeStep = 1000/60
 
     _nextEntityId = 0
     _eventManager = new EventManager()
@@ -14,10 +15,11 @@ export default class ECS {
     _entities = []
     _systems = []
     _lastTickTime = null
+    _fixedDelta = 0
 
     constructor() { }
 
-    // SYSTEM FORMAT: { init(), update() }
+    // SYSTEM FORMAT: { init(), update(), fixedUpdate() }
     // Systems execute in the order they are registered
     registerSystem(system) {
         if (typeof system !== "object")
@@ -189,21 +191,41 @@ export default class ECS {
     init() {
         // Call every system's init function
         for (const system of this._systems) {
-            if (!system.init) continue
-            system.init(this)
+            if (system.init) system.init(this)
         }
         this._lastTickTime = performance.now()
     }
 
     // Passing in component arrays, singleton components, and input action list
-    _updateSystems() {
+    _updateSystems(lastTick) {
+        // Allow last tick to be reset
+        if (lastTick) this._lastTickTime = lastTick
         const currTime = performance.now()
         const deltaTime = currTime - this._lastTickTime
+
         if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
+        // Fixed update functions
+        this._fixedDelta += deltaTime
+        while (this._fixedDelta > this.fixedTimeStep) {
+            this._fixedDelta -= this.fixedTimeStep
+            for (const system of this._systems) {
+                if (system.fixedUpdate) {                    
+                    system.fixedUpdate(
+                        this,
+                        this.fixedTimeStep,
+                        currTime - this._fixedDelta
+                    )
+                }
+                if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
+            }
+        }
+
+        // Update functions
         for (const system of this._systems) {
-            system.update(this, deltaTime, currTime)
+            if (system.update) system.update(this, deltaTime, currTime)
             if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
         }
+
         this._lastTickTime = currTime
     }
 }
