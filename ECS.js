@@ -164,11 +164,11 @@ export default class ECS {
     }
 
     on(eventType, callback) {
-        this._eventManager.addObserver(eventType, callback)
+        this._eventManager.addListener(eventType, callback)
     }
 
     off(eventType, callback) {
-        this._eventManager.removeObserver(eventType, callback)
+        this._eventManager.removeListener(eventType, callback)
     }
 
     emit(eventType, data) {
@@ -199,10 +199,10 @@ export default class ECS {
     _updateSystems() {
         const currTime = performance.now()
         const deltaTime = currTime - this._lastTickTime
-        if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
+        if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
         for (const system of this._systems) {
             system.update(this, deltaTime, currTime)
-            if (this._eventManager.newEvent) this._eventManager.dispatchQueue()
+            if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
         }
         this._lastTickTime = currTime
     }

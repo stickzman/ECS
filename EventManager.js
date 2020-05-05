@@ -1,28 +1,22 @@
-class EventContainer {
-    queue = []
-    observers = []
-
-    constructor() { }
-}
-
 export default class EventManager {
-    newEvent = false
-    _events = {}
+    queuedEvent = false
+    _eventListeners = {}
+    _eventQueue = []
 
     constructor() { }
 
-    addObserver(eventType, observer) {
-        if (!this._events[eventType]) {
-            this._events[eventType] = new EventContainer()
+    addListener(eventType, listener) {
+        if (!this._eventListeners[eventType]) {
+            this._eventListeners[eventType] = []
         }
-        this._events[eventType].observers.push(observer)
+        this._eventListeners[eventType].push(listener)
     }
 
-    removeObserver(eventType, observer) {
-        if (!this._events[eventType]) return
-        const i = this._events[eventType].observers.indexOf(observer)
+    removeListener(eventType, listener) {
+        if (!this._eventListeners[eventType]) return
+        const i = this._eventListeners[eventType].indexOf(listener)
         if (i < 0) return
-        this._events[eventType].observers.splice(i, 1)
+        this._eventListeners[eventType].splice(i, 1)
     }
 
     dispatchEvent(eventType, event) {
@@ -31,10 +25,10 @@ export default class EventManager {
             event = eventType
             eventType = event.constructor.name
         }
-        if (!this._events[eventType]) return
-        const observers = this._events[eventType].observers
-        for (const obs of observers) {
-            obs(event)
+        if (!this._eventListeners[eventType]) return
+        const listeners = this._eventListeners[eventType]
+        for (const callback of listeners) {
+            callback(event)
         }
     }
 
@@ -44,22 +38,20 @@ export default class EventManager {
             event = eventType
             eventType = event.constructor.name
         }
-        if (!this._events[eventType]) return
-        this._events[eventType].queue.push(event)
-        this.newEvent = true
+        if (!this._eventListeners[eventType]) return
+        this._eventQueue.push({
+            eventType: eventType,
+            event: event
+        })
+        this.queuedEvent = true
     }
 
     dispatchQueue() {
-        this.newEvent = false
-        for (const eventType of Object.values(this._events)) {
-            const queue = eventType.queue
-            eventType.queue = []  // Clear existing queue
-            const observers = eventType.observers
-            for (const event of queue) {
-                for (const obs of observers) {
-                    obs(event)
-                }
-            }
+        this.queuedEvent = false
+        const queue = this._eventQueue
+        this._eventQueue = [] // Clear existing queue
+        for (const e of queue) {
+            this.dispatchEvent(e.eventType, e.event)
         }
     }
 }
