@@ -16,6 +16,7 @@ export default class ECS {
     _systems = []
     _lastTickTime = null
     _fixedDelta = 0
+    _fuzzyDeltaThreshold = 0.2
 
     constructor() { }
 
@@ -197,19 +198,33 @@ export default class ECS {
     }
 
     // Passing in component arrays, singleton components, and input action list
-    _updateSystems(lastTick) {
+    _updateSystems(resetTime) {
         // Allow last tick to be reset
-        if (lastTick) this._lastTickTime = lastTick
+        if (resetTime) {
+            this._lastTickTime = performance.now()
+            this._fixedDelta = 0
+        }
         const currTime = performance.now()
         const deltaTime = currTime - this._lastTickTime
 
         if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
+
+        let snappedDeltaTime
+        if (Math.abs(deltaTime-1000/60) < this._fuzzyDeltaThreshold) {
+            snappedDeltaTime = 1000/60
+        } else if (Math.abs(deltaTime-1000/30) < this._fuzzyDeltaThreshold) {
+            snappedDeltaTime = 1000/30
+        } else if (Math.abs(deltaTime-1000/120) < this._fuzzyDeltaThreshold) {
+            snappedDeltaTime = 1000/120
+        } else {
+            snappedDeltaTime = deltaTime
+        }
         // Fixed update functions
-        this._fixedDelta += deltaTime
+        this._fixedDelta += snappedDeltaTime
         while (this._fixedDelta > this.fixedTimeStep) {
             this._fixedDelta -= this.fixedTimeStep
             for (const system of this._systems) {
-                if (system.fixedUpdate) {                    
+                if (system.fixedUpdate) {
                     system.fixedUpdate(
                         this,
                         this.fixedTimeStep,
