@@ -15,7 +15,9 @@ export default class ECS {
     _entities = []
     _systems = []
     _lastTickTime = null
+
     _fixedDelta = 0
+    _maxFixedDelta = 133
     _fuzzyDeltaThreshold = 0.2
 
     constructor() { }
@@ -221,6 +223,8 @@ export default class ECS {
         }
         // Fixed update functions
         this._fixedDelta += snappedDeltaTime
+        // Clamp fixedDelta to a max to avoid the slow update spiral of death
+        this._fixedDelta = Math.min(this._fixedDelta, this._maxFixedDelta)
         while (this._fixedDelta > this.fixedTimeStep) {
             this._fixedDelta -= this.fixedTimeStep
             for (const system of this._systems) {
