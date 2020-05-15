@@ -6,7 +6,7 @@ const ENTITY_ID_NON_INT = "Entity ID must be an integer"
 const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
-    state = {}
+    globals = {}
     fixedTimeStep = 1000/60
 
     _nextEntityId = 0
