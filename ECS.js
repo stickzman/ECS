@@ -18,7 +18,7 @@ export default class ECS {
 
     _fixedDelta = 0
     _maxFixedDelta = 133
-    _fuzzyDeltaThreshold = 0.2
+    _fuzzyDeltaThreshold = 1
 
     constructor() { }
 
@@ -33,7 +33,7 @@ export default class ECS {
 
     getQuery(query) {
         const key = this._getQueryKey(query)
-        if (this._queries.has(key)) return this._queries(key)
+        if (this._queries.has(key)) return this._queries.get(key)
 
         query = new Query(this._entities, query)
         // Add to query list so it can be updated with future changes
