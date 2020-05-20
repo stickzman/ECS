@@ -35,6 +35,10 @@ export default class ECS {
         if (system.fixedUpdate) this.on("fixedUpdate", system.fixedUpdate.bind(system))
     }
 
+    query(query) {
+        return this.getQuery(query).components
+    }
+
     getQuery(query) {
         const key = this._getQueryKey(query)
         if (this._queries.has(key)) return this._queries.get(key)
