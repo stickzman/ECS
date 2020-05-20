@@ -13,7 +13,9 @@ export default class ECS {
     _eventManager = new EventManager()
     _queries = new Map()
     _entities = []
-    _systems = []
+    _initFuncs = []
+    _fixedFuncs = []
+    _updateFuncs = []
     _lastTickTime = null
 
     _fixedDelta = 0
@@ -28,7 +30,9 @@ export default class ECS {
         if (typeof system !== "object")
             throw new TypeError(`System must be an object`)
 
-        this._systems.push(system)
+        if (system.init) this.on("init", system.init.bind(system))
+        if (system.update) this.on("update", system.update.bind(system))
+        if (system.fixedUpdate) this.on("fixedUpdate", system.fixedUpdate.bind(system))
     }
 
     getQuery(query) {
@@ -169,7 +173,15 @@ export default class ECS {
     }
 
     on(eventType, callback) {
-        this._eventManager.addListener(eventType, callback)
+        if (eventType === "update") {
+            this._updateFuncs.push(callback)
+        } else if (eventType === "fixedUpdate") {
+            this._fixedFuncs.push(callback)
+        } else if (eventType === "init") {
+            this._initFuncs.push(callback)
+        } else {
+            this._eventManager.addListener(eventType, callback)
+        }
     }
 
     off(eventType, callback) {
@@ -193,8 +205,8 @@ export default class ECS {
 
     init() {
         // Call every system's init function
-        for (const system of this._systems) {
-            if (system.init) system.init(this)
+        for (const init of this._initFuncs) {
+            init(this)
         }
         this._lastTickTime = performance.now()
     }
@@ -227,21 +239,19 @@ export default class ECS {
         this._fixedDelta = Math.min(this._fixedDelta, this._maxFixedDelta)
         while (this._fixedDelta > this.fixedTimeStep) {
             this._fixedDelta -= this.fixedTimeStep
-            for (const system of this._systems) {
-                if (system.fixedUpdate) {
-                    system.fixedUpdate(
-                        this,
-                        this.fixedTimeStep,
-                        currTime - this._fixedDelta
-                    )
-                }
+            for (const fixedUpdate of this._fixedFuncs) {
+                fixedUpdate(
+                    this,
+                    this.fixedTimeStep,
+                    currTime - this._fixedDelta
+                )
                 if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
             }
         }
 
         // Update functions
-        for (const system of this._systems) {
-            if (system.update) system.update(this, deltaTime, currTime)
+        for (const update of this._updateFuncs) {
+            update(this, deltaTime, currTime)
             if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
         }
 
