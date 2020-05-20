@@ -24,8 +24,8 @@ export default class ECS {
 
     constructor() { }
 
-    // SYSTEM FORMAT: { init(), update(), fixedUpdate() }
     // Systems execute in the order they are registered
+    // SYSTEM FORMAT: { init(), update(), fixedUpdate() }
     registerSystem(system) {
         if (typeof system !== "object")
             throw new TypeError(`System must be an object`)
