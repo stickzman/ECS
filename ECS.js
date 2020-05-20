@@ -83,7 +83,7 @@ export default class ECS {
             query.removeEntity(e)
         }
         delete this._entities[id]
-        this.emitImmediate("Entity_Deleted", { entity: e, id: id })
+        this.emitImmediate("Entity_Removed", { entity: e, id: id })
         return true
     }
 
@@ -181,6 +181,12 @@ export default class ECS {
         return removedComp !== undefined
     }
 
+    // Attach event listeners (custom or lifecycle)
+    // Lifecycle events:
+    // init, update, fixedUpdate
+    // Entity_Created, Entity_Removed
+    // <Component_Name>_Added, <Component_Name>_Removed
+    // <Tag_Name>_Added, <Tag_Name>_Removed
     on(eventType, callback) {
         if (eventType === "update") {
             this._updateFuncs.push(callback)
