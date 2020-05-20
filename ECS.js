@@ -67,12 +67,13 @@ export default class ECS {
 
     createEntity() {
         const id = this._nextEntityId++
-        this._entities[id] = new Entity(id)
+        this._entities[id] = new Entity(id, this)
         this.emitImmediate("Entity_Created", { entity: this._entities[id], id: id })
-        return id
+        return this._entities[id]
     }
 
     removeEntity(id) {
+        if (typeof id === "object") id = id.id
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
         if (this._entities[id] === undefined) return false
@@ -87,12 +88,13 @@ export default class ECS {
     }
 
     addTag(id, tag) {
+        if (typeof id === "object") id = id.id
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
         if (this._entities[id] === undefined) return false
 
         const e = this._entities[id]
-        e.addTag(tag)
+        e._addTag(tag)
         for (const [key, query] of this._queries) {
             if (query.hasEntity(e)) continue
             if (query.match(e)) query.addEntity(e)
@@ -102,12 +104,13 @@ export default class ECS {
     }
 
     removeTag(id, tag) {
+        if (typeof id === "object") id = id.id
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
         if (this._entities[id] === undefined) return false
 
         const e = this._entities[id]
-        const existed = e.removeTag(tag)
+        const existed = e._removeTag(tag)
 
         if (existed) {
             // Update entity component queries
@@ -122,6 +125,7 @@ export default class ECS {
     }
 
     addComponent(id, Component, ...args) {
+        if (typeof id === "object") id = id.id
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
         if (typeof Component !== "function")
@@ -134,7 +138,7 @@ export default class ECS {
         const comp = new Component(...args)
         comp._entity = e
         Object.seal(comp)
-        e.addComponent(comp)
+        e._addComponent(comp)
 
         // Update entity component queries
         for (const [key, query] of this._queries) {
@@ -150,6 +154,7 @@ export default class ECS {
     }
 
     removeComponent(id, Component) {
+        if (typeof id === "object") id = id.id
         if (!Number.isInteger(id))
             throw new Error(ENTITY_ID_NON_INT)
         if (typeof Component !== "function" && typeof Component !== "string")
@@ -158,7 +163,7 @@ export default class ECS {
             throw new Error("Entity does not exist")
 
         const e = this._entities[id]
-        const removedComp = e.removeComponent(Component)
+        const removedComp = e._removeComponent(Component)
 
         if (removedComp) {
             // Update entity component queries

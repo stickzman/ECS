@@ -80,10 +80,10 @@ export default class Query {
             this._entityMap.set(entity.id, entity)
             this._entities.push(entity)
             for (const comp of this._requiredComponents) {
-                this.components[comp].push(entity.components.get(comp))
+                this.components[comp].push(entity.getComponent(comp))
             }
             for (const comp of this._optionalComponents) {
-                this.components[comp].push(entity.components.get(comp))
+                this.components[comp].push(entity.getComponent(comp))
             }
         }
     }
