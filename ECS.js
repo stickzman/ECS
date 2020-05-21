@@ -6,7 +6,6 @@ const ENTITY_ID_NON_INT = "Entity ID must be an integer"
 const COMP_NON_CLASS = "Component must be a class"
 
 export default class ECS {
-    globals = {}
     fixedTimeStep = 1000/60
 
     _nextEntityId = 0
@@ -21,8 +20,16 @@ export default class ECS {
     _fixedDelta = 0
     _maxFixedDelta = 133
     _fuzzyDeltaThreshold = 1
+    _reservedKeys = new Set(Object.getOwnPropertyNames(this)
+                            .concat(Object.getOwnPropertyNames(this.__proto__)))
 
     constructor() { }
+
+    registerGlobal(name, data) {
+        if (this._reservedKeys.has(name))
+            throw new Error(name, "is a reserved property within ECS")
+        this[name] = data
+    }
 
     // Systems execute in the order they are registered
     // SYSTEM FORMAT: { init(), update(), fixedUpdate() }
