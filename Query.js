@@ -1,13 +1,13 @@
 const COMP_NON_CLASS = "Component must be a class or class name (string)"
 
 export default class Query {
-    components = {}
+    tuples = []
 
     _requiredComponents = []
     _optionalComponents = []
     _bannedComponents = []
-    _entityMap = new Map()
-    _entities = []
+    _entitySet = new Set()
+    _entityIds = []
     _tags = []
 
     constructor(entities, query) {
@@ -21,7 +21,6 @@ export default class Query {
                 } else if (typeof rComp !== "string") {
                     throw new Error(COMP_NON_CLASS)
                 }
-                this.components[rComp] = []
                 this._requiredComponents.push(rComp)
             }
         }
@@ -34,7 +33,6 @@ export default class Query {
                 } else if (typeof oComp !== "string") {
                     throw new Error(COMP_NON_CLASS)
                 }
-                this.components[oComp] = []
                 this._optionalComponents.push(oComp)
             }
         }
@@ -61,11 +59,11 @@ export default class Query {
     }
 
     get length() {
-        return this._entities.length
+        return this._entityIds.length
     }
 
     hasEntity(entity) {
-        return this._entityMap.has(entity.id)
+        return this._entitySet.has(entity.id)
     }
 
     addEntity(entity) {
@@ -77,25 +75,25 @@ export default class Query {
             this.removeEntity(entity)
             this.addEntity(entity)
         } else {
-            this._entityMap.set(entity.id, entity)
-            this._entities.push(entity)
+            this._entitySet.add(entity.id)
+            this._entityIds.push(entity.id)
+            const tuple = {}
             for (const comp of this._requiredComponents) {
-                this.components[comp].push(entity.getComponent(comp))
+                tuple[comp] = entity.getComponent(comp)
             }
             for (const comp of this._optionalComponents) {
-                this.components[comp].push(entity.getComponent(comp))
+                tuple[comp] = entity.getComponent(comp)
             }
+            this.tuples.push(tuple)
         }
     }
 
     removeEntity(entity) {
-        if (!this._entityMap.delete(entity.id)) return
+        if (!this._entitySet.delete(entity.id)) return
 
-        const i = this._entities.indexOf(entity)
-        this._entities.splice(i, 1)
-        Object.keys(this.components).forEach(c => {
-            this.components[c].splice(i, 1)
-        })
+        const i = this._entityIds.indexOf(entity.id)
+        this._entityIds.splice(i, 1)
+        this.tuples.splice(i, 1)
     }
 
     match(entity) {
