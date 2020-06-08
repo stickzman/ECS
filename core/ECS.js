@@ -76,6 +76,14 @@ export default class ECS {
         for (const [key, query] of this._queries) {
             query.removeEntity(e)
         }
+
+        for (const [compName, comp] of e._components) {
+            this.emitImmediate(compName + "_Removed", { component: comp, entity: e })
+        }
+        for (const tag of e._tags) {
+            this.emitImmediate(tag + "_Removed", { tag: tag, entity: e })
+        }
+
         delete this._entities[id]
         this.emitImmediate("Entity_Removed", { entity: e, id: id })
         return true

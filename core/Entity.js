@@ -1,10 +1,14 @@
 export default class Entity {
     _components = new Map()
-    _tags = new Map()
+    _tags = new Set()
 
     constructor(id, ecs) {
         this.id = id
         this.ecs = ecs
+    }
+
+    destroy() {
+        this.ecs.removeEntity(this.id)
     }
 
     addTag(tag) {
@@ -12,7 +16,7 @@ export default class Entity {
     }
 
     _addTag(tag) {
-        this._tags.set(tag, true)
+        this._tags.add(tag)
     }
 
     removeTag(tag) {
@@ -25,7 +29,7 @@ export default class Entity {
 
     hasAllTags(tags) {
         for (const tag of tags) {
-            if (!this.hasTag(tag)) return false
+            if (!this._tags.has(tag)) return false
         }
         return true
     }
@@ -63,21 +67,21 @@ export default class Entity {
 
     hasAllComponents(compNames) {
         for (const name of compNames) {
-            if (!this.hasComponent(name)) return false
+            if (!this._components.has(name)) return false
         }
         return true
     }
 
     hasSomeComponents(compNames) {
         for (const name of compNames) {
-            if (this.hasComponent(name)) return true
+            if (this._components.has(name)) return true
         }
         return false
     }
 
     hasNoneComponents(compNames) {
         for (const name of compNames) {
-            if (this.hasComponent(name)) return false
+            if (this._components.has(name)) return false
         }
         return true
     }
