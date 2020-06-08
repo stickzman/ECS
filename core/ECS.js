@@ -25,10 +25,12 @@ export default class ECS {
 
     constructor() { }
 
-    registerGlobal(name, data) {
+    // Extend ECS instance with singleton components/utility functions
+    extend(name, data) {
         if (this._reservedKeys.has(name))
             throw new Error(name, "is a reserved property within ECS")
         this[name] = data
+        return data
     }
 
     // Systems execute in the order they are registered
