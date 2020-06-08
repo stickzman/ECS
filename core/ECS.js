@@ -39,9 +39,9 @@ export default class ECS {
         if (typeof system !== "object")
             throw new TypeError(`System must be an object`)
 
-        if (system.init) this.on("init", system.init.bind(system))
-        if (system.update) this.on("update", system.update.bind(system))
-        if (system.fixedUpdate) this.on("fixedUpdate", system.fixedUpdate.bind(system))
+        if (system.init) this.on("init", system.init)
+        if (system.update) this.on("update", system.update)
+        if (system.fixedUpdate) this.on("fixedUpdate", system.fixedUpdate)
     }
 
     // Query entities, accessing from cache if possible
