@@ -44,34 +44,19 @@ export default class ECS {
         if (system.fixedUpdate) this.on("fixedUpdate", system.fixedUpdate.bind(system))
     }
 
-    query(query) {
-        return this.getQuery(query).components
-    }
+    // Query entities, accessing from cache if possible
+    // queryParams = { id, all, optional, none, tags }
+    query(queryParams) {
+        let query
+        if (queryParams.id) query = this._queries.get(queryParams.id)
 
-    getQuery(query) {
-        const key = this._getQueryKey(query)
-        if (this._queries.has(key)) return this._queries.get(key)
+        if (!query) {
+            query = new Query(this._entities, queryParams)
+            // Add to query list so it can be cached/updated with future changes
+            if (queryParams.id) this._queries.set(queryParams.id, query)
+        }
 
-        query = new Query(this._entities, query)
-        // Add to query list so it can be updated with future changes
-        this._queries.set(key, query)
-        return query
-    }
-
-    _getQueryKey(query) {
-        let reqComps = (Array.isArray(query.all)) ? query.all : [query.all]
-        let optComps = (Array.isArray(query.optional)) ? query.optional : [query.optional]
-        let bannedComps = (Array.isArray(query.none)) ? query.none : [query.none]
-        const tags = (Array.isArray(query.tags)) ? query.tags : [query.tags]
-
-        // Get names of component classes
-        reqComps = reqComps.map(c => (typeof c === "function") ? c.name : c)
-        optComps = optComps.map(c => (typeof c === "function") ? c.name : c)
-        bannedComps = bannedComps.map(c => (typeof c === "function") ? c.name : c)
-        return reqComps.sort().join(",")
-                + "|" + optComps.sort().join(",")
-                + "!" + bannedComps.sort().join(",")
-                + "#" + tags.sort().join(",")
+        return query.tuples
     }
 
     createEntity() {
