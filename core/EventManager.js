@@ -19,7 +19,14 @@ export default class EventManager {
         this._eventListeners[eventType].splice(i, 1)
     }
 
-    dispatchEvent(eventType, event) {
+    initialize() {
+        this.dispatchEvent = this._dispatchEvent
+        this.dispatchQueue()
+    }
+
+    dispatchEvent = this.addToQueue
+
+    _dispatchEvent(eventType, event) {
         // If object is passed in, get its class name, assign data appropiately
         if (typeof eventType === "object") {
             event = eventType
@@ -38,7 +45,6 @@ export default class EventManager {
             event = eventType
             eventType = event.constructor.name
         }
-        if (!this._eventListeners[eventType]) return
         this._eventQueue.push({
             eventType: eventType,
             event: event

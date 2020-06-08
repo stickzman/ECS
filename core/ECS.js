@@ -217,21 +217,22 @@ export default class ECS {
         for (const init of this._initFuncs) {
             init(this)
         }
+        // Execute any events queued before this first tick
+        this._eventManager.initialize()
         this._lastTickTime = performance.now()
     }
 
     // Passing in component arrays, singleton components, and input action list
     _updateSystems(resetTime) {
-        // Allow last tick to be reset
         if (resetTime) {
+            // Allow last tick to be reset
             this._lastTickTime = performance.now()
             this._fixedDelta = 0
         }
         const currTime = performance.now()
         const deltaTime = currTime - this._lastTickTime
 
-        if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
-
+        // Snap delta time to fixed update when close enough
         let snappedDeltaTime
         if (Math.abs(deltaTime-1000/60) < this._fuzzyDeltaThreshold) {
             snappedDeltaTime = 1000/60
@@ -242,10 +243,14 @@ export default class ECS {
         } else {
             snappedDeltaTime = deltaTime
         }
-        // Fixed update functions
         this._fixedDelta += snappedDeltaTime
         // Clamp fixedDelta to a max to avoid the slow update spiral of death
         this._fixedDelta = Math.min(this._fixedDelta, this._maxFixedDelta)
+
+        // Dispatch any remaining events from last frame
+        if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
+
+        // Execute fixedUpdates until caught up
         while (this._fixedDelta > this.fixedTimeStep) {
             this._fixedDelta -= this.fixedTimeStep
             for (const fixedUpdate of this._fixedFuncs) {
@@ -258,7 +263,7 @@ export default class ECS {
             }
         }
 
-        // Update functions
+        // execute update functions
         for (const update of this._updateFuncs) {
             update(this, deltaTime, currTime)
             if (this._eventManager.queuedEvent) this._eventManager.dispatchQueue()
