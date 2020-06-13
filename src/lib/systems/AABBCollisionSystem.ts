@@ -1,4 +1,4 @@
-export default {
+export const AABBCollisionSystem = {
     init(ecs) {
         ecs.on("BoundingBox_Removed", ev => {
             const movables = ecs.query({

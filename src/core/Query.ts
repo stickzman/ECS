@@ -1,6 +1,6 @@
 const COMP_NON_CLASS = "Component must be a class or class name (string)"
 
-export default class Query {
+export class Query {
     tuples = []
 
     _requiredComponents = []

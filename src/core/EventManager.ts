@@ -1,4 +1,4 @@
-export default class EventManager {
+export class EventManager {
     queuedEvent = false
     _eventListeners = {}
     _eventQueue = []

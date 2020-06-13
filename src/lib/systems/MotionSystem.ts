@@ -1,4 +1,4 @@
-export default {
+export const MotionSystem = {
     fixedUpdate(ecs, deltaTime) {
         const tuples = ecs.query({
             id: "motionSystem",

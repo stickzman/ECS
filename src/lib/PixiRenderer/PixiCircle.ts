@@ -1,4 +1,4 @@
-import { PIXI } from "./pixi.js"
+import * as PIXI from "pixi.js"
 
 export class PixiCircle {
     constructor(radius = 10, color = 0) {

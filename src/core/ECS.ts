@@ -1,11 +1,11 @@
-import Entity from "./Entity.js"
-import Query from "./Query.js"
-import EventManager from "./EventManager.js"
+import { Entity } from "./Entity.js"
+import { Query } from "./Query.js"
+import { EventManager } from "./EventManager.js"
 
 const ENTITY_ID_NON_INT = "Entity ID must be an integer"
 const COMP_NON_CLASS = "Component must be a class"
 
-export default class ECS {
+export class ECS {
     fixedTimeStep = 1000/60
 
     _nextEntityId = 0

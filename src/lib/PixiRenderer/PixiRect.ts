@@ -1,4 +1,4 @@
-import { PIXI } from "./pixi.js"
+import * as PIXI from "pixi.js"
 
 export class PixiRect {
     constructor(width = 10, height, color = 0) {

@@ -1,6 +1,6 @@
-import { PIXI } from "./pixi.js"
+import * as PIXI from "pixi.js"
 
-export default {
+export const RenderSystem = {
     config(ecs, config = {}) {
         PIXI.settings.ROUND_PIXELS = true
         const renderer = new PIXI.Renderer(config)

@@ -1,5 +1,5 @@
 // Works exclusively with AABB
-export default {
+export const Raycaster = {
     // Get all intersections of a line segment from origin to origin+delta
     cast(origin, delta, includeExits) {
         const tuples = ecs.query({id: "raycast", all: ["Position", "BoundingBox"]})

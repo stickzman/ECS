@@ -1,4 +1,4 @@
-export default class InputSystem {
+export class InputSystem {
     constructor(ecs) {
         this.ecs = ecs
         this.ecs.extend("inputActions", {})

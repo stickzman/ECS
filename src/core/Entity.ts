@@ -1,4 +1,4 @@
-export default class Entity {
+export class Entity {
     _components = new Map()
     _tags = new Set()
 
