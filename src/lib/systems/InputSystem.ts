@@ -1,11 +1,10 @@
 export class InputSystem {
-    constructor(ecs) {
-        this.ecs = ecs
-        this.ecs.extend("inputActions", {})
-        this.ecs.extend("input", new InputState())
-        this.ecs.extend("inputStream", new InputStream())
-        this.ecs.extend("bindings", new KeyBindings())
-        this.ecs.registerSystem(this)
+    constructor(public ecs) {
+        ecs.extend("inputActions", {})
+        ecs.extend("input", new InputState())
+        ecs.extend("inputStream", new InputStream())
+        ecs.extend("bindings", new KeyBindings())
+        ecs.registerSystem(this)
     }
 
     init(ecs) {
@@ -62,7 +61,7 @@ class KeyBindings {
     keyToAction = {}
     actionToKey = {}
 
-    constructor(bindings) {
+    constructor(bindings?) {
         if (typeof(bindings) === "object") {
             const actions = Object.keys(bindings)
             actions.forEach(a => { this.addBinding(a, bindings[a]) })
@@ -88,6 +87,10 @@ class KeyBindings {
     }
 }
 
+interface ActionState {
+    pressed: false,
+    changed: false
+}
 
 
 class InputStream {
@@ -111,12 +114,10 @@ class InputStream {
     }
 }
 
-
-
 class InputState {
     state = {}
 
-    constructor(actions) {
+    constructor(actions?) {
         if (!actions) return
         actions.forEach(a => {
             this.addAction(a)
@@ -146,7 +147,7 @@ class InputState {
     }
 
     reset() {
-        const vals = Object.values(this.state)
+        const vals = <ActionState[]>Object.values(this.state)
         vals.forEach(inputObj => {
             inputObj.changed = false
         })

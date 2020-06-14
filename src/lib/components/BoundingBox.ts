@@ -1,9 +1,8 @@
 export class BoundingBox {
     touching = new Set()
+    size: { x: number; y: number }
 
-    constructor(width, height) {
-        width = width
-        height = (height === undefined) ? width : height
+    constructor(width: number, height: number = width) {
         this.size = { x: width, y: height }
     }
 

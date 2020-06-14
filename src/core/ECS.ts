@@ -21,14 +21,15 @@ export class ECS {
     _maxFixedDelta = 133
     _fuzzyDeltaThreshold = 1
     _reservedKeys = new Set(Object.getOwnPropertyNames(this)
-                            .concat(Object.getOwnPropertyNames(this.__proto__)))
+                            .concat(Object.getOwnPropertyNames(
+                                Object.getPrototypeOf(this))))
 
     constructor() { }
 
     // Extend ECS instance with singleton components/utility functions
     extend(name, data) {
         if (this._reservedKeys.has(name))
-            throw new Error(name, "is a reserved property within ECS")
+            throw new Error(name + "is a reserved property within ECS")
         this[name] = data
         return data
     }
@@ -231,7 +232,7 @@ export class ECS {
     }
 
     // Passing in component arrays, singleton components, and input action list
-    _updateSystems(resetTime) {
+    _updateSystems(resetTime?) {
         if (resetTime) {
             // Allow last tick to be reset
             this._lastTickTime = performance.now()

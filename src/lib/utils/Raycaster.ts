@@ -1,7 +1,7 @@
 // Works exclusively with AABB
 export const Raycaster = {
     // Get all intersections of a line segment from origin to origin+delta
-    cast(origin, delta, includeExits) {
+    cast(ecs, origin, delta, includeExits) {
         const tuples = ecs.query({id: "raycast", all: ["Position", "BoundingBox"]})
         const signX = (delta.x >= 0) ? 1 : -1
         const signY = (delta.y >= 0) ? 1 : -1
@@ -33,7 +33,7 @@ export const Raycaster = {
     },
 
     // Returns true if line segment intersects anything
-    hitTest(origin, delta, includeExits) {
+    hitTest(ecs, origin, delta, includeExits) {
         const signX = (delta.x >= 0) ? 1 : -1
         const signY = (delta.y >= 0) ? 1 : -1
 

@@ -9,16 +9,8 @@ export default [
         output: {
             file: './dist/ECS.js',
             format: 'es',
-            sourceMap: true
+            sourcemap: true
         },
         plugins: [ commonjs(), resolve({ browser: true }), typescript() ],
-    },
-    {
-        input: 'src/core/ECS.ts',
-        output: {
-            file: './dist/ECS.thin.js',
-            format: 'es',
-        },
-        plugins: [ typescript() ],
     }
 ]

@@ -7,7 +7,7 @@ export const AABBCollisionSystem = {
             })
             for (const entity of movables) {
                 if (entity.BoundingBox.touching.has(ev.component)) {
-                    exitCollision(entity.BoundingBox, ev.component)
+                    exitCollision(entity.BoundingBox, ev.component, ecs)
                 }
             }
         })
@@ -38,10 +38,10 @@ export const AABBCollisionSystem = {
                     resolve(pos, col, vel, otherPos, otherCol)
 
                     if (!wasColliding(col, otherCol)) {
-                        enterCollision(col, otherCol)
+                        enterCollision(col, otherCol, ecs)
                     }
                 } else if (wasColliding(col, otherCol)) {
-                    exitCollision(col, otherCol)
+                    exitCollision(col, otherCol, ecs)
                 }
             }
             // Check against moving entities
@@ -54,10 +54,10 @@ export const AABBCollisionSystem = {
 
                 if (isColliding(pos, col, otherPos, otherCol)) {
                     if (!wasColliding(col, otherCol)) {
-                        enterCollision(col, otherCol)
+                        enterCollision(col, otherCol, ecs)
                     }
                 } else if (wasColliding(col, otherCol)) {
-                    exitCollision(col, otherCol)
+                    exitCollision(col, otherCol, ecs)
                 }
             }
         }
@@ -75,7 +75,7 @@ function wasColliding(col1, col2) {
     return col1.touching.has(col2) || col2.touching.has(col1)
 }
 
-function enterCollision(col, otherCol) {
+function enterCollision(col, otherCol, ecs) {
     col.touching.add(otherCol)
     otherCol.touching.add(col)
     ecs.emit("collisionEnter", {
@@ -86,7 +86,7 @@ function enterCollision(col, otherCol) {
     })
 }
 
-function exitCollision(col, otherCol) {
+function exitCollision(col, otherCol, ecs) {
     col.touching.delete(otherCol)
     otherCol.touching.delete(col)
     ecs.emit("collisionExit", {

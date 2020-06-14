@@ -1,6 +1,3 @@
 export class Acceleration {
-    constructor(x, y) {
-        this.x = x
-        this.y = y
-    }
+    constructor(public x, public y) { }
 }

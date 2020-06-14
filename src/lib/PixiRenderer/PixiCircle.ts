@@ -1,6 +1,8 @@
 import * as PIXI from "pixi.js"
 
 export class PixiCircle {
+    graphic: PIXI.Graphics
+    
     constructor(radius = 10, color = 0) {
         this.graphic = new PIXI.Graphics()
         this.graphic.beginFill(color)

@@ -15,7 +15,7 @@ export class Query {
         if (query.all) {
             const reqComps = (Array.isArray(query.all)) ? query.all : [query.all]
 
-            for (const rComp of reqComps) {
+            for (let rComp of reqComps) {
                 if (typeof rComp === "function") {
                     rComp = rComp.name
                 } else if (typeof rComp !== "string") {
@@ -27,7 +27,7 @@ export class Query {
         if (query.optional) {
             const optComps = (Array.isArray(query.optional)) ? query.optional : [query.optional]
 
-            for (const oComp of optComps) {
+            for (let oComp of optComps) {
                 if (typeof oComp === "function") {
                     oComp = oComp.name
                 } else if (typeof oComp !== "string") {
@@ -39,7 +39,7 @@ export class Query {
         if (query.none) {
             const bannedComps = (Array.isArray(query.none)) ? query.none : [query.none]
 
-            for (const bComp of bannedComps) {
+            for (let bComp of bannedComps) {
                 if (typeof bComp === "function") {
                     bComp = bComp.name
                 } else if (typeof bComp !== "string") {

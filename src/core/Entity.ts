@@ -2,9 +2,7 @@ export class Entity {
     _components = new Map()
     _tags = new Set()
 
-    constructor(id, ecs) {
-        this.id = id
-        this.ecs = ecs
+    constructor(public id, private ecs) {
     }
 
     destroy() {

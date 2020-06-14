@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js"
 
 export const RenderSystem = {
-    config(ecs, config = {}) {
+    config(ecs, config = { selector: "body", width: 600, height: 400 }) {
         PIXI.settings.ROUND_PIXELS = true
         const renderer = new PIXI.Renderer(config)
         ecs.extend("renderer", renderer)
@@ -55,13 +55,13 @@ export const RenderSystem = {
 }
 
 class Camera {
-    _x = 0
-    _y = 0
-    _scale = 1
+    private _x = 0
+    private _y = 0
+    private _scale = 1
+    private _stage: PIXI.Container
+    public view: PIXI.Container
 
     constructor(viewport) {
-        this.viewport = viewport
-
         // Doubles as rotation layers
         this.view = new PIXI.Container()
         this.view.x = viewport.width/2
