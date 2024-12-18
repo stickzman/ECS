@@ -24,7 +24,7 @@
     "@rollup/plugin-node-resolve": "^8.0.1",
     "@rollup/plugin-typescript": "^4.1.2",
     "pixi.js": "^5.2.4",
-    "rollup": "^2.16.0",
+    "rollup": "^2.79.2",
     "tslib": "^2.0.0",
     "typescript": "^3.9.5"
   }
